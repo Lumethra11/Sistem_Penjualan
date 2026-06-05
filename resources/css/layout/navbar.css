@@ -1,0 +1,126 @@
+/* =========================================================
+   NAVBAR
+========================================================= */
+.navbar {
+    width: 100%;
+    height: 72px; /* Dikecilkan dari 84px */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+}
+
+.navbar-left { display: flex; align-items: center; gap: 16px; }
+
+.menu-toggle {
+    width: 40px; height: 40px; /* Dikecilkan dari 46px */
+    border: none; border-radius: 12px;
+    background: var(--primary-soft); color: var(--primary);
+    font-size: 16px; cursor: pointer;
+    display: none; align-items: center; justify-content: center;
+    transition: var(--transition);
+}
+.menu-toggle:hover { transform: translateY(-2px); background: #dbeafe; }
+
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-box {
+    width: 42px; height: 42px; border-radius: 12px; /* Dikecilkan dari 58px */
+    background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; /* Font logo SP dikecilkan dari 24px */
+    font-weight: 800; flex-shrink: 0;
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.22);
+}
+.logo-text { font-size: 16px; font-weight: 700; color: #111827; letter-spacing: .2px; } /* Dikecilkan dari 18px */
+
+.navbar-right { display: flex; align-items: center; gap: 12px; }
+
+.nav-icon {
+    width: 40px; height: 40px; border: none; border-radius: 12px; /* Dikecilkan dari 48px */
+    background: #f8fafc; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #6b7280; cursor: pointer; transition: var(--transition); /* Font icon dikecilkan dari 20px */
+}
+.nav-icon:hover { background: #eff6ff; color: var(--primary); transform: translateY(-2px); }
+
+/* =========================================================
+   USER DROPDOWN & AVATAR
+========================================================= */
+.user-dropdown { position: relative; }
+.user-trigger { border: none; background: transparent; cursor: pointer; padding: 0; }
+
+.user-avatar {
+    width: 42px; height: 42px; border-radius: 50%; /* Dikecilkan dari 52px */
+    background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; overflow: hidden; /* Dikecilkan dari 17px */
+    border: 2px solid white; box-shadow: 0 6px 15px rgba(37, 99, 235, 0.20);
+    transition: var(--transition);
+}
+.user-avatar:hover { transform: translateY(-2px) scale(1.03); }
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.dropdown-menu {
+    position: absolute; top: 60px; right: 0; width: 260px; /* Sedikit dirampingkan */
+    background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(14px);
+    border: 1px solid #e5e7eb; border-radius: 20px; padding: 12px;
+    opacity: 0; visibility: hidden; transform: translateY(10px);
+    transition: all .25s ease; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+    z-index: 999;
+}
+.dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+.dropdown-header {
+    display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.03));
+    margin-bottom: 12px;
+}
+.dropdown-avatar {
+    width: 48px; height: 48px; border-radius: 14px; overflow: hidden; /* Dikecilkan dari 58px */
+    background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; flex-shrink: 0;
+}
+.dropdown-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.dropdown-user { display: flex; flex-direction: column; text-align: left; }
+.dropdown-name { font-size: 14px; font-weight: 700; color: #111827; }
+.dropdown-role { font-size: 12px; color: #6b7280; margin-top: 2px; }
+
+.dropdown-links { display: flex; flex-direction: column; gap: 4px; }
+.dropdown-item {
+    width: 100%; border: none; outline: none; text-decoration: none;
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    border-radius: 14px; background: transparent; color: #374151;
+    font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); /* Font size & padding disesuaikan */
+}
+.dropdown-item i { width: 16px; font-size: 15px; }
+.dropdown-item:hover { background: #eff6ff; color: var(--primary); transform: translateX(3px); }
+
+.logout-item { color: #dc2626; }
+.logout-item:hover { background: #fef2f2; color: #dc2626; }
+
+/* =========================================================
+   RESPONSIVE NAVBAR
+========================================================= */
+@media(max-width: 768px) {
+    .navbar { padding: 0 16px; }
+    .menu-toggle { display: flex; }
+    .logo-text { display: none; }
+    .navbar-right { gap: 8px; }
+    .dropdown-menu { width: 240px; right: -10px; }
+}
+
+@media(max-width: 500px) {
+    .navbar { height: 64px; padding: 0 14px; }
+    .logo { gap: 10px; }
+    .logo-box { width: 36px; height: 36px; font-size: 15px; border-radius: 10px; }
+    .user-avatar { width: 34px; height: 34px; border-radius: 10px; font-size: 13px; border: 2px solid white; }
+    .nav-icon { width: 36px; height: 36px; font-size: 16px; }
+}

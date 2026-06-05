@@ -1,0 +1,534 @@
+/* =========================================================
+   ROOT & BASE VARIABLES
+========================================================= */
+:root {
+    --ks-bg: #F8FAFC;
+    --ks-text: #0F172A;
+    --ks-text-muted: #64748B;
+    --ks-border: #E2E8F0;
+    --ks-card: #FFFFFF;
+    
+    --ks-primary: #1E3A8A;      /* Biru Gelap (Tombol Simpan / Aktif) */
+    --ks-primary-light: #2563EB; /* Biru Terang (Tombol Tambah) */
+    --ks-success: #22C55E;       /* Hijau (Cetak) */
+    --ks-danger: #EF4444;        /* Merah (Clear / Hapus) */
+    --ks-warning: #FEF08A;       /* Kuning (Badge Draft) */
+    --ks-warning-text: #854D0E;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.kasir-container {
+    width: 100%;
+    color: var(--ks-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* =========================================================
+   HEADER & TABS
+========================================================= */
+.kasir-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.kasir-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.tab-container {
+    display: flex;
+    gap: 12px;
+}
+
+.tab-button {
+    padding: 10px 28px;
+    border-radius: 999px;
+    background: var(--ks-card);
+    border: 1px solid var(--ks-border);
+    text-decoration: none;
+    color: var(--ks-text);
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+    background: #F1F5F9;
+}
+
+.tab-button.active {
+    background: var(--ks-primary);
+    color: #fff;
+    border-color: var(--ks-primary);
+}
+
+/* =========================================================
+   LAYOUT DINAMIS (TRANSISI PANEL)
+========================================================= */
+.kasir-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    min-height: 75vh;
+}
+
+/* Container Kiri (Draft) */
+.draft-container {
+    flex: 1; /* Default mengambil lebar penuh */
+    transition: all 0.3s ease;
+}
+
+.draft-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.draft-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Tombol Plus (+) di pojok kanan Draft Transaksi */
+.add-draft-btn {
+    width: 40px;
+    height: 40px;
+    background: var(--ks-primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 24px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);
+}
+
+.add-draft-btn:hover {
+    background: var(--ks-primary-light);
+}
+
+/* Grid Kartu Draft saat Layar Penuh */
+.draft-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+/* --- KONDISI SAAT PANEL KANAN TERBUKA --- */
+.kasir-layout.panel-open .draft-container {
+    width: 320px; /* Menyusut menjadi sidebar */
+    flex: none;
+}
+
+.kasir-layout.panel-open .draft-list {
+    display: flex;
+    flex-direction: column; /* Kartu menjadi ke bawah */
+}
+
+/* =========================================================
+   DRAFT CARD
+========================================================= */
+.draft-card {
+    background: var(--ks-card);
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid var(--ks-border);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.draft-card:hover {
+    transform: translateY(-2px);
+    border-color: #CBD5E1;
+}
+
+.draft-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.draft-top h4 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.badge {
+    background: var(--ks-warning);
+    color: var(--ks-warning-text);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+}
+
+.draft-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.draft-info small {
+    color: var(--ks-text-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.draft-price {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0;
+    color: var(--ks-text);
+}
+
+/* =========================================================
+   TRANSACTION PANEL (RIGHT SIDE)
+========================================================= */
+.transaction-panel {
+    display: none; /* Disembunyikan secara default */
+    flex: 1;
+    background: var(--ks-card);
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid var(--ks-border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.kasir-layout.panel-open .transaction-panel {
+    display: block;
+    animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.panel-section {
+    margin-bottom: 24px;
+}
+
+.panel-section h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--ks-text);
+}
+
+/* =========================================================
+   FORMS & GRIDS
+========================================================= */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.mb-2 {
+    margin-bottom: 16px;
+}
+
+input, select {
+    width: 100%;
+    height: 44px;
+    border: 1px solid var(--ks-border);
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: var(--ks-text);
+    outline: none;
+    transition: border-color 0.2s;
+    background: #fff;
+}
+
+input::placeholder {
+    color: #94A3B8;
+}
+
+input:focus, select:focus {
+    border-color: var(--ks-primary-light);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* =========================================================
+   BUTTONS (DIDALAM PANEL & UMUM)
+========================================================= */
+.btn-blue, .btn-dark-blue, .btn-green, .btn-red {
+    height: 44px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    color: #fff;
+    padding: 0 20px;
+    transition: opacity 0.2s;
+}
+
+.btn-blue:hover, .btn-dark-blue:hover, .btn-green:hover, .btn-red:hover {
+    opacity: 0.9;
+}
+
+.btn-blue { background: var(--ks-primary-light); }
+.btn-dark-blue { background: var(--ks-primary); }
+.btn-green { background: var(--ks-success); }
+.btn-red { background: var(--ks-danger); }
+
+/* Tombol hapus di tabel (X) */
+.btn-del {
+    background: #FEE2E2;
+    color: var(--ks-danger);
+    border: none;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-del:hover {
+    background: var(--ks-danger);
+    color: #fff;
+}
+
+/* Tombol Cetak Nota di History */
+.btn-print-nota {
+    background: #E0F2FE;
+    color: #0284C7;
+    padding: 8px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 12px;
+    transition: 0.2s;
+    display: inline-block;
+}
+
+.btn-print-nota:hover {
+    background: #0284C7;
+    color: #fff;
+}
+
+/* =========================================================
+   TABLE ITEM TRANSAKSI
+========================================================= */
+.items-table-container {
+    margin-top: 32px;
+    border-top: 2px solid var(--ks-border);
+    border-bottom: 2px solid var(--ks-border);
+    padding: 16px 0;
+    overflow-x: auto; 
+}
+
+.items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.items-table th {
+    text-align: left;
+    color: var(--ks-text-muted);
+    padding-bottom: 12px;
+    font-weight: 600;
+}
+
+.items-table td {
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--ks-border);
+    vertical-align: middle;
+}
+
+.items-table tr:last-child td {
+    border-bottom: none;
+}
+
+.qty-input {
+    width: 70px;
+    height: 36px;
+    text-align: center;
+    padding: 0;
+}
+
+.text-center {
+    text-align: center;
+    color: #94A3B8;
+    font-style: italic;
+}
+
+/* =========================================================
+   SUMMARY KEMBALIAN & TOTAL
+========================================================= */
+.summary-section {
+    margin-top: 24px;
+    background: #FAFAFA;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--ks-border);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    font-size: 15px;
+    color: var(--ks-text-muted);
+}
+
+.summary-row:last-child {
+    margin-bottom: 0;
+}
+
+.input-nominal {
+    width: 200px;
+    height: 40px;
+    background: #F1F5F9;
+    text-align: right;
+    border: 1px solid #CBD5E1;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ks-text);
+}
+
+.input-nominal:focus {
+    background: #fff;
+}
+
+.summary-row.total {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ks-text);
+    margin-top: 16px;
+    border-top: 2px dashed #CBD5E1;
+    padding-top: 16px;
+}
+
+/* =========================================================
+   ACTION BUTTONS (BOTTOM)
+========================================================= */
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+}
+
+.right-actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* =========================================================
+   HISTORY TABLE (Tampilan Gambar 3)
+========================================================= */
+.table-container {
+    background: var(--ks-card);
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid var(--ks-border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.table-container h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    margin-top: 0;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-table th {
+    text-align: left;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ks-text);
+    border-bottom: 2px solid var(--ks-border);
+    background: #F8FAFC;
+}
+
+.history-table td {
+    padding: 16px;
+    font-size: 14px;
+    color: var(--ks-text-muted);
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.history-table tr:hover td {
+    background: #F8FAFC;
+}
+
+.pagination-wrapper {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+========================================================= */
+@media (max-width: 1200px) {
+    .kasir-layout.panel-open {
+        flex-direction: column;
+    }
+    .kasir-layout.panel-open .draft-container {
+        width: 100%;
+    }
+    .kasir-layout.panel-open .draft-list {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 12px;
+    }
+    .draft-card {
+        min-width: 280px;
+    }
+    .transaction-panel {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-grid-2, .form-grid-3 {
+        grid-template-columns: 1fr;
+    }
+    .action-buttons {
+        flex-direction: column-reverse;
+        gap: 16px;
+    }
+    .right-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    .right-actions button, .action-buttons > button {
+        width: 100%;
+    }
+}

@@ -1,0 +1,359 @@
+/* =========================================================
+   ROOT VARIABLES
+========================================================= */
+:root {
+    --primary: #2F5BD3;
+    --primary-soft: #EFF6FF;
+    --dark: #1E293B;
+    --gray: #64748B;
+    --blue: #3B82F6;
+    --border: #E5E7EB;
+    --transition: all 0.3s ease;
+}
+
+/* =========================================================
+   PROFILE PAGE WRAPPER
+========================================================= */
+.profile-page {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex: 1;
+    position: relative;
+    padding-bottom: 40px;
+}
+
+/* =========================================================
+   GELEMBUNG NOTIFIKASI (TOAST PILL)
+========================================================= */
+.toast-alert {
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #10b981;
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 999px;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+    z-index: 9999;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: bubbleToast 3.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes bubbleToast {
+    0% { transform: translate(-50%, -50px); opacity: 0; }
+    12% { transform: translate(-50%, 0); opacity: 1; }
+    88% { transform: translate(-50%, 0); opacity: 1; }
+    100% { transform: translate(-50%, -50px); opacity: 0; visibility: hidden; }
+}
+
+/* =========================================================
+   KARTU VIEW PROFILE - PREMIUM GRID BOX
+========================================================= */
+.profile-view-card {
+    width: 100%;
+    max-width: 800px;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--border);
+}
+
+.profile-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.info-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.25s ease;
+}
+
+.info-box:hover {
+    background: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 8px 25px rgba(47, 91, 211, 0.08);
+    transform: translateY(-2px);
+}
+
+.info-box .info-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-box .info-label i {
+    font-size: 14px;
+    color: var(--primary);
+}
+
+.info-box .info-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+/* =========================================================
+   KARTU EDIT PROFILE - FORM INPUT
+========================================================= */
+.profile-edit-card {
+    width: 100%;
+    max-width: 850px;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border);
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--dark);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--dark);
+    outline: none;
+    transition: var(--transition);
+    background: #ffffff;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+/* =========================================================
+   SECTION DIVIDER (UNTUK PASSWORD BARU)
+========================================================= */
+.section-divider {
+    margin-top: 16px;
+    padding-top: 24px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.section-divider h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+
+.section-divider p {
+    font-size: 13px;
+    color: var(--gray);
+}
+
+/* =========================================================
+   COMMON TOP SECTION (BANNER FOTO & UTAMA)
+========================================================= */
+.profile-top {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    margin-bottom: 36px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+}
+
+.profile-avatar-big {
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--primary));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 700;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15);
+}
+
+.profile-avatar-big img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-user-info h2 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+
+.profile-user-info p {
+    font-size: 15px;
+    color: var(--gray);
+    margin-bottom: 12px;
+}
+
+.profile-user-info span {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* =========================================================
+   AVATAR UPLOAD + EFEK HOVER KAMERA
+========================================================= */
+.avatar-upload-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 36px;
+}
+
+.avatar-upload {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    font-weight: 700;
+    overflow: hidden; 
+    position: relative;
+    cursor: pointer;
+    border: 3px dashed #93c5fd;
+    transition: var(--transition);
+}
+
+.avatar-upload img,
+#previewImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover !important; 
+    display: block;
+}
+
+.avatar-edit-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    opacity: 0;
+    transition: 0.3s ease;
+}
+
+.avatar-upload:hover .avatar-edit-overlay { opacity: 1; }
+.avatar-edit-overlay i { font-size: 26px; margin-bottom: 4px; }
+.avatar-edit-overlay span { font-size: 11px; font-weight: 600; }
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+.profile-actions {
+    margin-top: 36px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 14px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: #1e3a8a;
+}
+
+.btn-light {
+    background: #f1f5f9;
+    color: var(--dark);
+}
+
+.btn-light:hover {
+    background: #e2e8f0;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+@media(max-width: 768px) {
+    .profile-view-card, .profile-edit-card { padding: 24px; }
+    .profile-top { flex-direction: column; text-align: center; }
+    .profile-info-grid, .profile-grid { grid-template-columns: 1fr; gap: 16px; }
+    .profile-actions { justify-content: stretch; flex-direction: column-reverse; }
+    .profile-actions .btn { width: 100%; text-align: center; }
+}

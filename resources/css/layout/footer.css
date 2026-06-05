@@ -1,0 +1,13 @@
+/* =========================================================
+   FOOTER
+========================================================= */
+.footer {
+    margin-top: auto;
+    background: var(--white);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    border-radius: 12px;
+    text-align: center;
+    color: var(--gray);
+    font-size: 13px;
+}

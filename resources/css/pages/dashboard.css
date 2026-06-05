@@ -1,0 +1,17 @@
+.dashboard-header {
+    margin-bottom: 24px;
+    background: var(--white);
+    padding: 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 6px;
+}
+.page-subtitle {
+    font-size: 15px;
+    color: var(--gray);
+}

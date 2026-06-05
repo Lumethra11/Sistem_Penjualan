@@ -1,0 +1,310 @@
+/* =========================================================
+   ROOT VARIABLES KHUSUS HALAMAN
+========================================================= */
+:root {
+    --mb-primary: #2F5BD3;
+    --mb-primary-dark: #1E3A8A;
+    --mb-card: #FFFFFF;
+    --mb-border: #E5E7EB;
+    --mb-text: #1E293B;
+    --mb-success: #22C55E;
+    --mb-danger: #EF4444;
+}
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+.manajemen-barang-container {
+    width: 100%;
+    padding: 0; 
+    background: transparent;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.manajemen-barang-container h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--mb-text);
+    margin-bottom: 24px;
+}
+
+/* =========================================================
+   TOP BAR & TABS (Navigasi Utama)
+========================================================= */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.tab-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px; 
+}
+
+.tab-button {
+    padding: 10px 24px;
+    border-radius: 999px;
+    border: 1px solid var(--mb-border);
+    background: #fff;
+    color: var(--mb-text);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.tab-button:hover { background: #f8fafc; }
+.tab-button.active {
+    background: var(--mb-primary);
+    color: #fff;
+    border-color: var(--mb-primary);
+}
+
+/* =========================================================
+   FILTER TABS (Filter Tipe Barang - Underline Design)
+========================================================= */
+.filter-tabs {
+    display: flex;
+    gap: 32px;
+    border-bottom: 2px solid #F1F5F9;
+    margin-bottom: 24px;
+}
+
+.filter-btn {
+    padding: 8px 0 12px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #64748B;
+    text-decoration: none;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.filter-btn:hover {
+    color: var(--mb-text);
+}
+
+.filter-btn.active {
+    color: var(--mb-primary);
+}
+
+.filter-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--mb-primary);
+    border-radius: 2px 2px 0 0;
+}
+
+/* =========================================================
+   SEARCH BAR
+========================================================= */
+.search-form { display: flex; gap: 8px; }
+.search-form input {
+    height: 40px; border: 1px solid var(--mb-border);
+    border-radius: 8px; padding: 0 16px; outline: none;
+    font-size: 14px; min-width: 280px; transition: 0.2s;
+}
+.search-form input:focus { 
+    border-color: var(--mb-primary); 
+    box-shadow: 0 0 0 3px rgba(47,91,211,0.10);
+}
+.search-form button {
+    background: var(--mb-primary); color: #fff; border: none;
+    padding: 0 20px; border-radius: 8px; cursor: pointer;
+    font-weight: 600; font-size: 14px; transition: 0.2s;
+}
+.search-form button:hover { background: var(--mb-primary-dark); }
+
+/* =========================================================
+   CARD (KOTAK PUTIH KONTEN)
+========================================================= */
+.table-container, .form-container {
+    background: var(--mb-card); border-radius: 12px;
+    padding: 32px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--mb-border);
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+table { width: 100%; border-collapse: collapse; }
+table thead tr { border-bottom: 1px solid var(--mb-border); }
+table th {
+    text-align: left; padding: 14px 16px; font-size: 13px;
+    font-weight: 600; color: #64748B; background: #F8FAFC;
+}
+table th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+table th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+table td {
+    padding: 16px; border-bottom: 1px solid #F1F5F9;
+    font-size: 14px; color: #334155; vertical-align: middle;
+}
+
+/* =========================================================
+   ACTION BUTTONS (EDIT/DELETE)
+========================================================= */
+.action-buttons {
+    display: flex; gap: 8px; justify-content: center;
+}
+.btn-icon {
+    width: 36px; height: 36px; border: none; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: 0.2s; color: #fff;
+}
+.btn-icon.edit { background: var(--mb-success); }
+.btn-icon.edit:hover { background: #16a34a; transform: translateY(-2px); }
+.btn-icon.delete { background: var(--mb-danger); }
+.btn-icon.delete:hover { background: #dc2626; transform: translateY(-2px); }
+.btn-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* =========================================================
+   UPLOAD WRAPPER
+========================================================= */
+.upload-wrapper {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 16px;
+    background: #FAFAF9; padding: 24px; border-radius: 12px;
+    border: 2px dashed #E2E8F0;
+}
+.upload-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.hidden-input { display: none; }
+.choose-file-btn {
+    background: #fff; border: 1px solid var(--mb-border); padding: 10px 18px;
+    border-radius: 8px; font-size: 13px; cursor: pointer;
+    font-weight: 600; color: var(--mb-text); transition: 0.2s;
+}
+.choose-file-btn:hover { border-color: var(--mb-primary); color: var(--mb-primary); }
+.file-name-text { font-size: 13px; color: #64748B; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* =========================================================
+   BUTTONS UMUM
+========================================================= */
+.download-btn, .upload-btn, .submit-btn {
+    padding: 10px 20px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: 0.2s;
+    text-decoration: none; border: none;
+}
+.download-btn { background: #fff; border: 1px solid var(--mb-border); color: var(--mb-text); }
+.download-btn:hover { background: #f8fafc; }
+.upload-btn { background: #10B981; color: #fff; }
+.upload-btn:hover { background: #059669; }
+.submit-btn { background: var(--mb-primary); color: #fff; width: 100%; margin-top: 16px; padding: 16px; font-size: 15px; }
+.submit-btn:hover { background: var(--mb-primary-dark); }
+
+/* =========================================================
+   FORM & INPUTS (WITH VALIDATION)
+========================================================= */
+.form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.form-group { display: flex; flex-direction: column; margin-bottom: 20px; position: relative; }
+.form-group label { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #475569; }
+
+.input-wrapper { position: relative; width: 100%; }
+.input-wrapper input, .input-wrapper select {
+    width: 100%; height: 44px; border: 1px solid var(--mb-border);
+    border-radius: 8px; padding: 0 16px; font-size: 14px;
+    background: #fff; outline: none; transition: 0.2s; color: var(--mb-text);
+}
+.input-wrapper input:focus, .input-wrapper select:focus {
+    border-color: var(--mb-primary); box-shadow: 0 0 0 3px rgba(47,91,211,0.15);
+}
+
+/* Error State Input */
+.input-wrapper.error input, .input-wrapper.error select {
+    border-color: var(--mb-danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    padding-right: 40px;
+}
+.error-icon {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--mb-danger); display: none; pointer-events: none;
+}
+.input-wrapper.error .error-icon { display: block; }
+.error-text {
+    font-size: 12px; color: var(--mb-danger); margin-top: 6px; display: none; font-weight: 500;
+}
+.input-wrapper.error + .error-text { display: block; }
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+.pagination-wrapper { margin-top: 32px; display: flex; justify-content: flex-end; width: 100%; }
+.pagination-wrapper nav { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.pagination-wrapper nav > div:first-child { display: none; }
+.pagination-wrapper nav > div:last-child { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.pagination-wrapper p { margin: 0; font-size: 13px; color: #64748B; font-weight: 500; }
+.pagination { display: flex; list-style: none; gap: 6px; padding: 0; margin: 0; }
+.pagination li { display: inline-block; }
+.pagination li a, .pagination li span {
+    display: flex; align-items: center; justify-content: center; min-width: 36px; height: 36px;
+    padding: 0 10px; background: #fff; border: 1px solid var(--mb-border); border-radius: 8px;
+    font-size: 14px; font-weight: 600; color: #475569; text-decoration: none; transition: 0.2s;
+}
+.pagination li a:hover { background: #f8fafc; border-color: var(--mb-primary); color: var(--mb-primary); }
+.pagination li.active span { background: var(--mb-primary); color: #fff; border-color: var(--mb-primary); }
+.pagination li.disabled span { background: #f1f5f9; color: #cbd5e1; border-color: var(--mb-border); cursor: not-allowed; }
+
+/* =========================================================
+   MODAL POPUP (EDIT & ALERT)
+========================================================= */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s ease;
+}
+.modal-overlay.active { opacity: 1; visibility: visible; }
+
+.modal-content {
+    background: #fff; border-radius: 16px; width: 100%; max-width: 600px;
+    padding: 32px; transform: scale(0.95) translateY(20px); transition: 0.3s ease;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); position: relative;
+}
+.modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+
+/* Alert Modal & Delete Modal */
+.modal-content.alert-modal {
+    max-width: 400px; text-align: center; padding: 40px 32px;
+}
+.alert-icon {
+    width: 64px; height: 64px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; margin: 0 auto 20px auto;
+}
+.alert-icon.success { background: #DCFCE7; color: var(--mb-success); }
+.alert-icon.error { background: #FEE2E2; color: var(--mb-danger); }
+.alert-icon svg { width: 32px; height: 32px; stroke-width: 2.5; }
+.alert-title { font-size: 20px; font-weight: 700; color: var(--mb-text); margin-bottom: 8px; }
+.alert-desc { font-size: 14px; color: #64748B; margin-bottom: 0; line-height: 1.5; }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.modal-header h2 { font-size: 20px; font-weight: 700; color: var(--mb-text); }
+.close-modal-btn {
+    background: transparent; border: none; font-size: 24px; color: #94A3B8;
+    cursor: pointer; transition: 0.2s; line-height: 1;
+}
+.close-modal-btn:hover { color: var(--mb-danger); }
+
+/* Tombol Modal Delete / Actions */
+.modal-actions {
+    display: flex; gap: 12px; margin-top: 32px; justify-content: center;
+}
+.btn-cancel {
+    background: #F1F5F9; color: #475569; padding: 12px 20px;
+    border-radius: 8px; font-weight: 600; cursor: pointer; border: none; 
+    flex: 1; transition: 0.2s; font-size: 14px;
+}
+.btn-cancel:hover { background: #E2E8F0; }
+.btn-confirm-delete {
+    background: var(--mb-danger); color: #fff; padding: 12px 20px;
+    border-radius: 8px; font-weight: 600; cursor: pointer; border: none; 
+    flex: 1; transition: 0.2s; font-size: 14px;
+}
+.btn-confirm-delete:hover { background: #dc2626; }

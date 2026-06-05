@@ -1,0 +1,174 @@
+/* =========================================================
+   GOOGLE FONT & RESET
+========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: #f5f7fb;
+    color: #111827;
+    overflow-x: hidden;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+ul {
+    list-style: none;
+}
+
+button,
+input,
+textarea {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Penyelamat Global: Mencegah gambar offside/melewati batas */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* =========================================================
+   ROOT VARIABLES (Warna & Styling Dasar)
+========================================================= */
+:root {
+    --primary: #1e3a8a;
+    --primary-soft: #eef2ff;
+
+    --white: #ffffff;
+    --dark: #111827;
+    --gray: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f5f7fb;
+
+    --blue: #0ea5e9;
+    --green: #22c55e;
+    --orange: #f59e0b;
+    --red: #ef4444;
+
+    --shadow: 0 10px 25px rgba(0,0,0,.08);
+    --radius: 24px;
+    --transition: .25s ease;
+}
+
+/* =========================================================
+   LAYOUT STRUCTURE (Pembungkus Utama)
+========================================================= */
+.main {
+    margin-top: 84px;   
+    
+    /* 1. KEMBALIKAN KE 280px agar tidak tertabrak sidebar */
+    margin-left: 280px; 
+    
+    /* 2. Berikan padding lega agar konten tidak menempel ke garis */
+    padding: 32px 40px; 
+    
+    min-height: calc(100vh - 84px);
+    display: flex;
+    flex-direction: column;
+    gap: 24px; 
+    transition: var(--transition);
+}
+
+.content-wrapper {
+    width: 100%;
+    /* Mencegah bungkus menyusut saat isi konten lebih panjang dari layar */
+    flex: 1 0 auto; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================================================
+   GLOBAL TYPOGRAPHY
+========================================================= */
+.page-title {
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    color: #111827;
+}
+
+.page-subtitle {
+    color: #6b7280;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* =========================================================
+   GLOBAL COMPONENTS (Buttons, Alerts)
+========================================================= */
+.btn {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-light { background: #f3f4f6; color: #111827; }
+.btn-light:hover { background: #e5e7eb; }
+
+.success-alert {
+    background: #ecfdf5;
+    color: #065f46;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    animation: alertSmooth 3s ease forwards;
+}
+
+@keyframes alertSmooth {
+    0% { transform: translateY(-12px); opacity: 0; }
+    15% { transform: translateY(0); opacity: 1; }
+    85% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-12px); opacity: 0; }
+}
+
+/* =========================================================
+   RESPONSIVE MAIN CONTENT
+========================================================= */
+/* Tablet */
+@media(max-width: 1100px) {
+    .main { margin-left: 92px; }
+}
+
+/* Mobile Besar */
+@media(max-width: 768px) {
+    .main { 
+        margin-left: 0; 
+        padding: 22px; 
+    }
+    .page-title { font-size: 34px; }
+}
+
+/* Mobile Kecil */
+@media(max-width: 500px) {
+    .main { 
+        margin-top: 78px; /* Menyesuaikan tinggi navbar versi mobile */
+        padding: 18px; 
+    }
+    .page-title { font-size: 28px; }
+    .page-subtitle { font-size: 14px; }
+}
