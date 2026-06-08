@@ -95,6 +95,9 @@ Route::middleware('auth')->group(function () {
 
     Route::put('/kelola-user/status/{id}', [KelolaUserController::class, 'toggleStatus'])
         ->name('kelolauser.status');
+    
+    Route::put('/kelola-user/manual-permission/{id}', [KelolaUserController::class, 'toggleManualPermission'])
+        ->name('kelolauser.manual.permission');
 
     Route::prefix('kasir')->name('kasir.')->group(function () {
 

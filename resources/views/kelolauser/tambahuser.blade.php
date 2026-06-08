@@ -85,25 +85,33 @@
 
 
             <div class="form-row">
-
                 <div class="form-group">
                     <label>Password</label>
-
                     <div class="input-wrapper">
                         <input type="password" name="password" required>
                     </div>
                 </div>
 
-
                 <div class="form-group">
                     <label>Konfirmasi Password</label>
-
                     <div class="input-wrapper">
-                        <input type="password"
-                               name="password_confirmation"
-                               required>
+                        <input type="password" name="password_confirmation" required>
                     </div>
                 </div>
+
+            </div>
+
+            {{-- Hak Akses Box - Dibuat terpisah dari form-row password agar tidak merusak grid --}}
+            <div class="permission-box">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" name="can_input_manual_barang" value="1">
+                    <div class="custom-checkbox"></div>
+                    <div class="checkbox-text">
+                        <span>Izinkan Kasir Menginput Barang Manual</span>
+                        <small>Kasir dapat menambahkan barang manual saat transaksi apabila barang belum tersedia pada data master.</small>
+                    </div>
+                </label>
+            </div>
 
             </div>
 

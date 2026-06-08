@@ -22,6 +22,7 @@ class User extends Authenticatable
         'alamat',
         'password',
         'is_active',
+        'can_input_manual_barang',
     ];
 
     protected $hidden = [

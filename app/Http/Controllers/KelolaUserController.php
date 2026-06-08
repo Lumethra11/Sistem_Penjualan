@@ -51,6 +51,9 @@ class KelolaUserController extends Controller
             'password' => Hash::make($request->password),
 
             'is_active' => true,
+
+            'can_input_manual_barang'
+                => $request->has('can_input_manual_barang'),
         ]);
 
         return redirect()
@@ -76,19 +79,46 @@ class KelolaUserController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | Toggle Status
+    | Aktif / Nonaktif User
     |--------------------------------------------------------------------------
     */
 
     public function toggleStatus($id)
     {
         $user = User::where('admin_id', Auth::id())
+            ->where('role', 'kasir')
             ->findOrFail($id);
 
         $user->is_active = !$user->is_active;
 
         $user->save();
 
-        return back()->with('success', 'Status user berhasil diperbarui');
+        return back()->with(
+            'success',
+            'Status user berhasil diperbarui'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Toggle Izin Input Barang Manual
+    |--------------------------------------------------------------------------
+    */
+
+    public function toggleManualPermission($id)
+    {
+        $user = User::where('admin_id', Auth::id())
+            ->where('role', 'kasir')
+            ->findOrFail($id);
+
+        $user->can_input_manual_barang =
+            !$user->can_input_manual_barang;
+
+        $user->save();
+
+        return back()->with(
+            'success',
+            'Izin input barang manual berhasil diperbarui'
+        );
     }
 }

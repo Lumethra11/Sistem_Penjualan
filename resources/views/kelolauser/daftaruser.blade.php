@@ -44,11 +44,14 @@
         <div class="user-grid">
             @forelse($users->where('is_active', true) as $user)
                 <div class="user-card">
+                    {{-- Badge Status dipindah ke pojok kanan atas --}}
+                    <span class="status-badge aktif">Aktif</span>
+
                     <div class="user-top">
                         <div class="user-avatar">
                             {{ strtoupper(substr($user->name, 0, 1)) }}
                         </div>
-                        <div>
+                        <div class="user-meta">
                             <h3>{{ $user->name }}</h3>
                             <p>{{ '@' . $user->username }}</p>
                         </div>
@@ -67,14 +70,33 @@
                             <span>Alamat</span>
                             <strong>{{ $user->alamat ?? '-' }}</strong>
                         </div>
+                        <div class="info-item-row">
+                            <span>Izin Input Manual</span>
+                            <span class="inline-privilege {{ $user->can_input_manual_barang ? 'allowed' : 'denied' }}">
+                                {{ $user->can_input_manual_barang ? 'Diizinkan' : 'Tidak Diizinkan' }}
+                            </span>
+                        </div>
                     </div>
 
                     <div class="user-footer">
-                        <span class="status aktif">Aktif</span>
-                        <button type="button" class="status-btn danger-btn"
-                                onclick="openModal({{ $user->id }}, 'nonaktifkan')">
-                            Nonaktifkan
-                        </button>
+                        <div class="action-group">
+                            <form action="{{ route('kelolauser.manual.permission', $user->id) }}" method="POST">
+                                @csrf
+                                @method('PUT')
+                                @if($user->can_input_manual_barang)
+                                    <button type="submit" class="action-btn warning-btn">
+                                        Cabut Izin
+                                    </button>
+                                @else
+                                    <button type="submit" class="action-btn primary-btn">
+                                        Izinkan Manual
+                                    </button>
+                                @endif
+                            </form>
+                            <button type="button" class="action-btn danger-btn" onclick="openModal({{ $user->id }}, 'nonaktifkan')">
+                                Nonaktifkan
+                            </button>
+                        </div>
                     </div>
                 </div>
             @empty
@@ -91,11 +113,14 @@
         <div class="user-grid">
             @forelse($users->where('is_active', false) as $user)
                 <div class="user-card inactive-card">
+                    {{-- Badge Status dipindah ke pojok kanan atas --}}
+                    <span class="status-badge nonaktif">Tidak Aktif</span>
+
                     <div class="user-top">
                         <div class="user-avatar">
                             {{ strtoupper(substr($user->name, 0, 1)) }}
                         </div>
-                        <div>
+                        <div class="user-meta">
                             <h3>{{ $user->name }}</h3>
                             <p>{{ '@' . $user->username }}</p>
                         </div>
@@ -117,11 +142,24 @@
                     </div>
 
                     <div class="user-footer">
-                        <span class="status nonaktif">Tidak Aktif</span>
-                        <button type="button" class="status-btn"
-                                onclick="openModal({{ $user->id }}, 'aktifkan')">
-                            Aktifkan
-                        </button>
+                        <div class="action-group">
+                            <form action="{{ route('kelolauser.manual.permission', $user->id) }}" method="POST">
+                                @csrf
+                                @method('PUT')
+                                @if($user->can_input_manual_barang)
+                                    <button type="submit" class="action-btn warning-btn">
+                                        Cabut Izin
+                                    </button>
+                                @else
+                                    <button type="submit" class="action-btn primary-btn">
+                                        Izinkan Manual
+                                    </button>
+                                @endif
+                            </form>
+                            <button type="button" class="action-btn success-btn" onclick="openModal({{ $user->id }}, 'aktifkan')">
+                                Aktifkan
+                            </button>
+                        </div>
                     </div>
                 </div>
             @empty
@@ -134,7 +172,6 @@
 
     {{-- PAGINATION --}}
     <div class="pagination-wrapper">
-        {{-- Appends 'status' agar saat pindah page, parameter filter tidak hilang --}}
         {{ $users->appends(['status' => $statusFilter])->links() }}
     </div>
 
