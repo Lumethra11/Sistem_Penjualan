@@ -5,7 +5,7 @@
 @section('content')
 <div class="profile-page">
 
-    {{-- TOAST --}}
+    {{-- TOAST ALERT --}}
     @if(session('success'))
         <div class="toast-alert">
             <i class="fa-solid fa-circle-check"></i>
@@ -65,20 +65,22 @@
                     <input type="text" name="no_telp" value="{{ old('no_telp', Auth::user()->no_telp) }}">
                 </div>
 
-                {{-- KONDISI ADMIN --}}
+                {{-- FIXED: KONDISI ADMIN (Membawa Nama Toko DAN Alamat Toko Utama) --}}
                 @if(Auth::user()->role === 'admin')
                     <div class="form-group full-width">
                         <label>Nama Toko</label>
                         <input type="text" name="nama_toko" value="{{ old('nama_toko', Auth::user()->nama_toko) }}">
                     </div>
+
+                    <div class="form-group full-width">
+                        <label>Alamat Toko / Usaha</label>
+                        <textarea name="alamat" placeholder="Masukkan alamat lengkap toko utama">{{ old('alamat', Auth::user()->alamat) }}</textarea>
+                    </div>
                 @endif
 
-                {{-- KONDISI KASIR --}}
+                {{-- KONDISI KASIR (Tidak memiliki kolom Alamat Lagi) --}}
                 @if(Auth::user()->role === 'kasir')
-                    <div class="form-group full-width">
-                        <label>Alamat Lengkap</label>
-                        <textarea name="alamat">{{ old('alamat', Auth::user()->alamat) }}</textarea>
-                    </div>
+                    {{-- Kasir tidak diizinkan mengubah alamat toko lewat profilnya sendiri --}}
                 @endif
 
                 {{-- PEMBATAS: KEAMANAN AKUN (GANTI PASSWORD) --}}
@@ -106,7 +108,7 @@
                 </a>
                 <button type="submit" class="btn btn-primary">
                     Simpan Perubahan
-                </button>
+                </a>
             </div>
 
         </form>

@@ -21,7 +21,7 @@ class AuthController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | Register Admin (Validasi Duplikasi Ketat)
+    | Register Admin (Validasi Duplikasi Ketat + FIX ALAMAT)
     |--------------------------------------------------------------------------
     */
     public function register(Request $request)
@@ -31,6 +31,7 @@ class AuthController extends Controller
             'username'    => 'required|string|max:50|unique:users,username',
             'email'       => 'required|email|unique:users,email',
             'nama_toko'   => 'required|string|max:100|unique:users,nama_toko',
+            'alamat'      => 'required|string', // <-- 1. TAMBAHKAN VALIDASI ALAMAT DI SINI
             'no_telp'     => 'nullable|string|max:20|unique:users,no_telp',
             'password'    => 'required|string|min:5|confirmed',
         ], [
@@ -49,6 +50,8 @@ class AuthController extends Controller
             'nama_toko.max'        => 'Nama toko maksimal 100 karakter',
             'nama_toko.unique'     => 'Nama toko sudah terdaftar, gunakan nama unik lain',
 
+            'alamat.required'      => 'Alamat toko wajib diisi', // <-- 2. TAMBAHKAN PESAN ERROR ALAMAT
+
             'no_telp.max'          => 'No telepon maksimal 20 karakter',
             'no_telp.unique'       => 'No telepon sudah terdaftar pada akun lain',
 
@@ -64,6 +67,7 @@ class AuthController extends Controller
             'username'    => $request->username,
             'email'       => $request->email,
             'nama_toko'   => $request->nama_toko,
+            'alamat'      => $request->alamat, // <-- 3. MASUKKAN DATA ALAMAT AGAR DISIMPAN KE DATABASE
             'no_telp'     => $request->no_telp,
             'password'    => Hash::make($request->password),
         ]);

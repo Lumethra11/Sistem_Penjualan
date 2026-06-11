@@ -5,7 +5,7 @@
 @section('content')
 <div class="profile-page">
 
-    {{-- TOAST --}}
+    {{-- TOAST ALERET --}}
     @if(session('success'))
         <div class="toast-alert">
             <i class="fa-solid fa-circle-check"></i>
@@ -60,13 +60,24 @@
 
             {{-- JIKA USER ADALAH ADMIN --}}
             @if(Auth::user()->role === 'admin')
-                <div class="info-box full-width">
+                <div class="info-box">
                     <div class="info-label">
                         <i class="fa-solid fa-store"></i>
                         Nama Toko / Usaha
                     </div>
                     <div class="info-value">
                         {{ Auth::user()->nama_toko ?? '-' }}
+                    </div>
+                </div>
+
+                {{-- FIXED: Alamat sekarang mutlak milik Admin/Toko --}}
+                <div class="info-box">
+                    <div class="info-label">
+                        <i class="fa-solid fa-location-dot"></i>
+                        Alamat Toko
+                    </div>
+                    <div class="info-value">
+                        {{ Auth::user()->alamat ?? '-' }}
                     </div>
                 </div>
             @endif
@@ -93,13 +104,14 @@
                     </div>
                 </div>
 
+                {{-- FIXED: Data Alamat Toko Utama diambil secara dinamis lewat relasi Admin --}}
                 <div class="info-box full-width">
                     <div class="info-label">
                         <i class="fa-solid fa-location-dot"></i>
-                        Alamat Lengkap
+                        Alamat Toko Utama
                     </div>
                     <div class="info-value">
-                        {{ Auth::user()->alamat ?? '-' }}
+                        {{ Auth::user()->admin->alamat ?? '-' }}
                     </div>
                 </div>
             @endif
