@@ -1,0 +1,290 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(59,130,246,0.25), transparent),
+        radial-gradient(circle at 80% 70%, rgba(16,185,129,0.2), transparent),
+        linear-gradient(135deg, #dbeafe, #f0fdf4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* ── ALERT ATAS ── */
+.alert {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-120%);
+    padding: 14px 24px 14px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9999;
+    transition: transform .4s cubic-bezier(.4,0,.2,1), opacity .4s;
+    opacity: 0;
+    box-shadow: 0 12px 40px rgba(0,0,0,.25);
+    max-width: 90vw;
+}
+.alert.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+.alert svg {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+}
+.alert-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.alert-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+/* ── CONTAINER ── */
+.container {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 30px 60px rgba(0,0,0,.4), 0 0 80px rgba(37,99,235,0.15);
+    animation: fadeUp .6s ease both;
+    transition: transform .5s cubic-bezier(.4,0,.2,1), opacity .4s;
+}
+.container.exit {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+/* ── LEFT PANEL (FORM) ── */
+.left {
+    flex: 3;
+    padding: 44px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.left h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+.left .subtitle {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 24px;
+}
+
+/* ── COMPONENTS STRUCTURE (Gaya Form Barang) ── */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 14px;
+    position: relative;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 12px 40px 12px 40px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    font-size: 13.5px;
+    color: #0f172a;
+    outline: none;
+    transition: .25s;
+}
+
+.input-wrapper input::placeholder { 
+    color: #94a3b8; 
+}
+
+.input-wrapper input:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34,197,94,.15);
+}
+
+/* Ikon Sisi Kiri */
+.icon-left {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 17px;
+    height: 17px;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: .2s;
+}
+.input-wrapper input:focus ~ .icon-left { 
+    color: #3b82f6; 
+}
+
+/* Eye Toggle Password */
+.toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #94a3b8;
+    transition: .2s;
+    display: flex;
+    align-items: center;
+    z-index: 5;
+}
+.toggle:hover { 
+    color: #64748b; 
+}
+
+/* ── ERROR STYLING (Murni Mengikuti Form Barang) ── */
+.error-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ef4444;
+    display: none;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.error-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #dc2626;
+    margin-top: 5px;
+    display: none;
+    line-height: 1.4;
+}
+
+/* Trigger otomatis saat class .error disuntikkan ke .input-wrapper */
+.input-wrapper.error input {
+    border-color: #ef4444 !important;
+    background: #fef2f2;
+    box-shadow: 0 0 0 3px rgba(239,68,68,.1) !important;
+}
+
+.input-wrapper.error .error-icon {
+    display: block;
+}
+
+.input-wrapper.error ~ .error-text {
+    display: block;
+}
+
+.input-wrapper.error .icon-left {
+    color: #ef4444;
+}
+
+.input-wrapper.error input[type="password"] ~ .toggle {
+    right: 36px;
+}
+
+/* ── ROW 2 KOLOM ── */
+.row {
+    display: flex;
+    gap: 12px;
+}
+.row .form-group {
+    flex: 1;
+}
+
+/* ── BUTTONS & LINKS ── */
+.btn-primary {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3b82f6, #22c55e);
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .3s;
+    margin-top: 10px;
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(37,99,235,.35);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.login-link {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13.5px;
+    color: #94a3b8;
+}
+.login-link a {
+    color: #2563eb;
+    font-weight: 600;
+    text-decoration: none;
+    transition: .2s;
+}
+.login-link a:hover { color: #1d4ed8; text-decoration: underline; }
+
+/* ── RIGHT PANEL ── */
+.right {
+    flex: 2;
+    background: linear-gradient(160deg, #22c55e, #3b82f6);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 48px 36px;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+.right .icon-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+    animation: pulse 2s infinite;
+}
+.right .icon-circle svg { width: 36px; height: 36px; color: #fff; }
+.right h2 { font-size: 26px; font-weight: 700; margin-bottom: 10px; position: relative; z-index: 1; }
+.right p { font-size: 14px; line-height: 1.7; opacity: .85; margin-bottom: 28px; position: relative; z-index: 1; max-width: 280px; }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,.2); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255,255,255,0); }
+}
+
+@media(max-width:860px) {
+    .container { max-width: 480px; flex-direction: column; }
+    .right { order: 0; padding: 28px 32px; }
+    .right h2 { font-size: 20px; }
+    .right p { font-size: 13px; margin-bottom: 18px; }
+    .left { order: 1; padding: 28px 28px; }
+    .left h2 { font-size: 22px; }
+    .row { flex-direction: column; gap: 0; }
+}
