@@ -20,7 +20,6 @@
         </form>
     </div>
 
-    {{-- FILTER TABS UNTUK TIPE BARANG --}}
     <div class="filter-tabs">
         <a href="{{ route('manajemenbarang.databarang', ['tipe' => 'stok', 'search' => request('search')]) }}" 
            class="filter-btn {{ $tipe == 'stok' ? 'active' : '' }}">
@@ -44,7 +43,7 @@
                     <th>Harga Beli</th>
                     <th>Harga Jual</th>
                     <th>Supplier</th>
-                    <th style="text-align: center;">Aksi</th>
+                    <th class="text-center-th">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -57,15 +56,22 @@
                     <td>{{ $item->satuan }}</td>
                     <td>Rp. {{ number_format($item->harga_beli,0,',','.') }}</td>
                     <td>Rp. {{ number_format($item->harga_jual,0,',','.') }}</td>
-                    <td>{{ $item->supplier }}</td>
+                    <td>{{ $item->supplier ?? '-' }}</td>
                     <td>
                         <div class="action-buttons">
-                            <button type="button" class="btn-icon edit" onclick="openEditModal({{ json_encode($item) }})" title="Edit">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </button>
+                            @if($tipe == 'stok')
+                                <button type="button" class="btn-icon edit" onclick="openEditModal({{ json_encode($item) }})" title="Edit">
+                                    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                </button>
+                            @else
+                                {{-- BUTTON PINDAH SUDAH BERBENTUK ICON SVG (MIGRATE ICON) --}}
+                                <form action="/manajemenbarang/{{ $item->id }}/pindah" method="POST" class="inline-form">
+                                    @csrf
+                                    <button type="submit" class="btn-icon move" title="Pindahkan ke tipe Stok">
+                                        <svg viewBox="0 0 24 24"><path d="M17 21v-4H7v-2h10v-4l5 5zM7 3v4h10v2H7v4l-5-5z"/></svg>
+                                    </button>
+                                </form>
+                            @endif
                             
                             <form action="{{ route('manajemenbarang.destroy', $item->id) }}" method="POST" onsubmit="confirmDelete(event, this);">
                                 @csrf
@@ -82,7 +88,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" style="text-align: center; color: #64748B;">Data barang tidak ditemukan.</td>
+                    <td colspan="9" class="text-muted-empty">Data barang tidak ditemukan.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -94,10 +100,11 @@
     </div>
 </div>
 
+{{-- MODAL FORM EDIT BARANG STOK --}}
 <div class="modal-overlay" id="editModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Edit Data Barang</h2>
+            <h2>Edit Data Barang Stok</h2>
             <button class="close-modal-btn" onclick="closeEditModal()">&times;</button>
         </div>
 
@@ -113,27 +120,24 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Tipe Barang</label>
+                    <label>Jumlah/Stok</label>
                     <div class="input-wrapper">
-                        <select name="tipe_barang" id="edit_tipe" required>
-                            <option value="stok">Stok</option>
-                            <option value="non_stok">Non-Stok</option>
-                        </select>
+                        <input type="number" name="stok" id="edit_stok" required>
                     </div>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Jumlah/Stok</label>
-                    <div class="input-wrapper">
-                        <input type="number" name="stok" id="edit_stok" required>
-                    </div>
-                </div>
-                <div class="form-group">
                     <label>Satuan</label>
                     <div class="input-wrapper">
                         <input type="text" name="satuan" id="edit_satuan" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <div class="input-wrapper">
+                        <input type="text" name="kategori" id="edit_kategori" required>
                     </div>
                 </div>
             </div>
@@ -153,26 +157,19 @@
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Kategori</label>
-                    <div class="input-wrapper">
-                        <input type="text" name="kategori" id="edit_kategori" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Supplier</label>
-                    <div class="input-wrapper">
-                        <input type="text" name="supplier" id="edit_supplier">
-                    </div>
+            <div class="form-group">
+                <label>Supplier</label>
+                <div class="input-wrapper">
+                    <input type="text" name="supplier" id="edit_supplier">
                 </div>
             </div>
 
-            <button type="submit" class="submit-btn" style="margin-top: 0;">Update Barang</button>
+            <button type="submit" class="submit-btn-update">Update Barang</button>
         </form>
     </div>
 </div>
 
+{{-- POPUP ALERT CONFIRM DELETE --}}
 <div class="modal-overlay" id="deleteModal">
     <div class="modal-content alert-modal">
         <div class="alert-icon error">
@@ -191,19 +188,15 @@
 <div class="modal-overlay active" id="alertModal">
     <div class="modal-content alert-modal">
         @if(session('success'))
-            <div class="alert-icon success">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </div>
+            <div class="alert-icon success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
             <h2 class="alert-title">Berhasil!</h2>
             <p class="alert-desc">{{ session('success') }}</p>
         @else
-            <div class="alert-icon error">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            </div>
+            <div class="alert-icon error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></div>
             <h2 class="alert-title">Oops!</h2>
             <p class="alert-desc">{{ session('error') }}</p>
         @endif
-        <button class="submit-btn" onclick="closeAlertModal()" style="width: 100%; margin-top: 32px;">Tutup</button>
+        <button class="submit-btn" onclick="closeAlertModal()">Tutup</button>
     </div>
 </div>
 @endif
@@ -212,9 +205,7 @@
     function openEditModal(data) {
         document.getElementById('editModal').classList.add('active');
         document.getElementById('formEdit').action = `/manajemenbarang/${data.id}`;
-        
         document.getElementById('edit_nama').value = data.nama_barang;
-        document.getElementById('edit_tipe').value = data.tipe_barang;
         document.getElementById('edit_stok').value = data.stok;
         document.getElementById('edit_satuan').value = data.satuan;
         document.getElementById('edit_hbeli').value = data.harga_beli;
@@ -223,7 +214,7 @@
         document.getElementById('edit_supplier').value = data.supplier || '';
     }
 
-    function closeEditModal() { document.getElementById('editModal').classList.remove('active'); }
+    function closeEditModal() { document.getElementById('editModal').remove('active'); }
 
     let formToDelete = null;
     function confirmDelete(e, form) {

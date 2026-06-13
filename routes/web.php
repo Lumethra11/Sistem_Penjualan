@@ -56,6 +56,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/formbarang', [ManajemenBarangController::class, 'formBarang'])
             ->name('formbarang');
 
+        Route::get('/rekomendasi', [ManajemenBarangController::class, 'cariRekomendasi'])
+            ->name('rekomendasi');
+
         Route::post('/store', [ManajemenBarangController::class, 'store'])
             ->name('store');
 
@@ -70,6 +73,9 @@ Route::middleware('auth')->group(function () {
 
         Route::put('/{id}', [ManajemenBarangController::class, 'update'])
             ->name('update');
+
+        Route::post('/{id}/pindah', [ManajemenBarangController::class, 'pindahKeStok'])
+            ->name('pindah');
 
         Route::delete('/{id}', [ManajemenBarangController::class, 'destroy'])
             ->name('destroy');

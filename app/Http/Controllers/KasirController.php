@@ -7,13 +7,14 @@ use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class KasirController extends Controller
 {
     public function index()
     {
-        // Ambil draft beserta relasi details-nya agar bisa di-load oleh JavaScript
+        // Ambil draft beserta detail dan relasi barangnya agar tidak kosong saat di-load ulang
         $drafts = Transaksi::with(['details.barang'])
             ->where('status', 'draft')
             ->latest()
@@ -40,75 +41,167 @@ class KasirController extends Controller
             'metode_pembayaran' => 'required',
         ]);
 
-        // Cek tombol mana yang diklik (Draft atau Cetak)
         $status = $request->submit_type === 'selesai' ? 'selesai' : 'draft';
         $biayaJasa = $request->biaya_jasa_servis ?? 0;
 
-        // Jika form mengirimkan transaksi_id, berarti kita MELANJUTKAN DRAFT
-        if ($request->transaksi_id) {
-            $transaksi = Transaksi::findOrFail($request->transaksi_id);
-            $transaksi->update([
-                'jenis_motor' => $request->jenis_motor,
-                'total_harga' => $request->total_tagihan ?? 0,
-                'biaya_jasa_servis' => $biayaJasa,
-                'metode_pembayaran' => $request->metode_pembayaran,
-                'status' => $status,
-            ]);
-            
-            // Hapus detail lama, kita akan input ulang dari tabel yang dikirim form
-            $transaksi->details()->delete();
-        } else {
-            // JIKA TRANSAKSI BARU
-            $transaksi = Transaksi::create([
-                'no_invoice' => 'INV-' . strtoupper(Str::random(5)),
-                'user_id' => Auth::id(),
-                'jenis_motor' => $request->jenis_motor,
-                'total_harga' => $request->total_tagihan ?? 0,
-                'biaya_jasa_servis' => $biayaJasa,
-                'metode_pembayaran' => $request->metode_pembayaran,
-                'status' => $status,
-            ]);
-        }
+        DB::beginTransaction();
 
-        // Simpan Detail Barang & Kurangi Stok
-        if ($request->has('items')) {
-            foreach ($request->items as $item) {
-                DetailTransaksi::create([
-                    'transaksi_id' => $transaksi->id,
-                    'barang_id' => $item['barang_id'] ?? null,
-                    'nama_barang_manual' => $item['nama_barang'] ?? null,
-                    'harga_modal' => $item['harga_beli'] ?? 0,
-                    'harga_jual_satuan' => $item['harga'],
-                    'jumlah' => $item['qty'],
-                    'subtotal' => $item['harga'] * $item['qty'],
+        try {
+            // 1. UPDATE ATAU BUAT TRANSAKSI UTAMA (HEAD)
+            if ($request->transaksi_id) {
+                $transaksi = Transaksi::findOrFail($request->transaksi_id);
+                $transaksi->update([
+                    'jenis_motor' => $request->jenis_motor,
+                    'total_harga' => $request->total_tagihan ?? 0,
+                    'biaya_jasa_servis' => $biayaJasa,
+                    'metode_pembayaran' => $request->metode_pembayaran,
+                    'status' => $status,
                 ]);
+                
+                // Hapus detail lama, kita input ulang dari data form terbaru yang dikirim
+                $transaksi->details()->delete();
+            } else {
+                $transaksi = Transaksi::create([
+                    'no_invoice' => 'INV-' . strtoupper(Str::random(5)),
+                    'user_id' => Auth::id(),
+                    'jenis_motor' => $request->jenis_motor,
+                    'total_harga' => $request->total_tagihan ?? 0,
+                    'biaya_jasa_servis' => $biayaJasa,
+                    'metode_pembayaran' => $request->metode_pembayaran,
+                    'status' => $status,
+                ]);
+            }
 
-                // LOGIKA PENGURANGAN STOK
-                // Pastikan transaksinya 'selesai' dan ini adalah barang dari database (bukan barang manual)
-                if ($status === 'selesai' && !empty($item['barang_id'])) {
-                    $barang = Barang::find($item['barang_id']);
-                    
-                    if ($barang) {
-                        // Catatan: Pastikan field stok di tabel barang Anda bernama 'stok'.
-                        // Jika namanya berbeda (misal: 'jumlah_barang' atau 'qty'), silakan ubah kata 'stok' di bawah ini.
-                        $barang->decrement('stok', $item['qty']);
+            // 2. PROSES DETAIL ITEMS & LOGIKA MUTASI STOK
+            if ($request->has('items')) {
+                foreach ($request->items as $item) {
+                    $barangId = !empty($item['barang_id']) ? $item['barang_id'] : null;
+                    $namaBarang = $item['nama_barang'] ?? null;
+                    $hargaBeli = $item['harga_beli'] ?? 0;
+                    $hargaJual = $item['harga'] ?? 0;
+                    $qty = intval($item['qty']);
+
+                    // =========================================================
+                    // EKSEKUSI JIKA TRANSAKSI "CETAK" (SELESAI FINAL)
+                    // =========================================================
+                    if ($status === 'selesai') {
+                        
+                        // JIKA BARANG MANUAL (Belum ada barang_id dari database)
+                        if (empty($barangId) && !empty($namaBarang)) {
+                            // Bersihkan penanda teks satuan hasil render javascript jika terbawa
+                            $namaClean = preg_replace('/ \([^)]+\)$/', '', $namaBarang);
+
+                            // Cek apakah data manual ini sebenarnya sudah terdaftar sebelumnya di master Non-Stok
+                            $barangEksis = Barang::where('nama_barang', $namaClean)
+                                                 ->where('tipe_barang', 'non_stok')
+                                                 ->first();
+
+                            if ($barangEksis) {
+                                $barangId = $barangEksis->id;
+                            } else {
+                                // Fallback Otomatis Kategori & Supplier ke Master Non-Stok
+                                $kategoriManual = 'Manual Kasir';
+                                $supplierManual = !empty($item['supplier']) ? $item['supplier'] : 'Input Manual Kasir';
+
+                                // Generate Kode Barang Otomatis berdasar Kategori Manual Kasir (MAN)
+                                $cleanKategori = preg_replace('/[^A-Za-z]/', '', $kategoriManual);
+                                $prefix = strtoupper(substr($cleanKategori, 0, 3)); // Hasil: MAN
+                                $lastBarang = Barang::where('kode_barang', 'like', $prefix . '%')->orderBy('kode_barang', 'desc')->first();
+                                $newNumber = $lastBarang ? intval(substr($lastBarang->kode_barang, 3)) + 1 : 1;
+                                $kodeBarang = $prefix . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+
+                                // Daftarkan langsung menjadi barang baru di data non_stok (Stok awal = 0)
+                                $barangBaru = Barang::create([
+                                    'kode_barang' => $kodeBarang,
+                                    'nama_barang' => $namaClean,
+                                    'tipe_barang' => 'non_stok',
+                                    'stok'        => 0,
+                                    'satuan'      => 'Pcs',
+                                    'harga_beli'  => $hargaBeli,
+                                    'harga_jual'  => $hargaJual,
+                                    'kategori'    => $kategoriManual,
+                                    'supplier'    => $supplierManual,
+                                ]);
+
+                                $barangId = $barangBaru->id;
+
+                                // Catat pembuatan data baru ke histori_stok dengan volume 0
+                                DB::table('histori_stok')->insert([
+                                    'barang_id' => $barangId,
+                                    'jenis_pergerakan' => 'masuk',
+                                    'jumlah' => 0,
+                                    'sisa_stok_saat_ini' => 0,
+                                    'keterangan' => 'Barang baru (Non-Stok) dibuat otomatis dari cetak transaksi manual kasir',
+                                    'created_at' => now(),
+                                    'updated_at' => now()
+                                ]);
+                            }
+                        }
+
+                        // JIKA MENGGUNAKAN BARANG DATABASE (BAIK STOK ATAU PUN SEBELUMNYA NON-STOK)
+                        if (!empty($barangId)) {
+                            $barang = Barang::lockForUpdate()->find($barangId);
+
+                            if (!$barang) {
+                                throw new \Exception("Barang dengan ID {$barangId} tidak ditemukan.");
+                            }
+
+                            // Jika bertipe stok fisik, lakukan pengecekan kuantitas sisa barang
+                            if ($barang->tipe_barang === 'stok') {
+                                if ($barang->stok < $qty) {
+                                    throw new \Exception("Gagal Cetak! Stok untuk '" . $barang->nama_barang . "' tidak mencukupi (Sisa: " . $barang->stok . ").");
+                                }
+                                $barang->decrement('stok', $qty);
+                            } else {
+                                // Tipe Non-Stok tetap dikurangi penjualannya agar pelacakan data sisa sinkron
+                                $barang->decrement('stok', $qty);
+                            }
+
+                            // Catat log pengeluaran ke histori_stok
+                            DB::table('histori_stok')->insert([
+                                'barang_id' => $barang->id,
+                                'jenis_pergerakan' => 'keluar',
+                                'jumlah' => $qty,
+                                'sisa_stok_saat_ini' => $barang->stok,
+                                'keterangan' => 'Penjualan Selesai Nota ' . $transaksi->no_invoice,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        }
                     }
+
+                    // =========================================================
+                    // JIKA HANYA "SIMPAN DRAFT" / MENDRAFT ULANG
+                    // =========================================================
+                    // Masukkan item ke detail transaksi tanpa memotong stok fisik master apa pun
+                    DetailTransaksi::create([
+                        'transaksi_id' => $transaksi->id,
+                        'barang_id' => $barangId, // Bernilai null jika draft & manual
+                        'nama_barang_manual' => empty($barangId) ? $namaBarang : null,
+                        'harga_modal' => $hargaBeli,
+                        'harga_jual_satuan' => $hargaJual,
+                        'jumlah' => $qty,
+                        'subtotal' => $hargaJual * $qty,
+                    ]);
                 }
             }
-        }
 
-        // Jika "Cetak", arahkan ke riwayat sambil memicu pop-up print struk
-        if ($status === 'selesai') {
-            return redirect()->route('kasir.riwayat')
-                ->with('cetak_nota', $transaksi->id)
-                ->with('success', 'Transaksi Selesai & Berhasil Dicetak');
-        }
+            DB::commit();
 
-        // Jika "Simpan Draft", refresh ke halaman kasir awal
-        return redirect()->route('kasir.transaksi')->with('success', 'Draft transaksi berhasil disimpan/diperbarui');
+            if ($status === 'selesai') {
+                return redirect()->route('kasir.riwayat')
+                    ->with('cetak_nota', $transaksi->id)
+                    ->with('success', 'Transaksi Selesai & Berhasil Dicetak');
+            }
+
+            return redirect()->route('kasir.transaksi')->with('success', 'Draft transaksi berhasil disimpan/diperbarui');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('kasir.transaksi')->with('error', $e->getMessage());
+        }
     }
 
-    // Fungsi baru untuk layout Nota/Struk
     public function nota($id)
     {
         $transaksi = Transaksi::with('details')->findOrFail($id);

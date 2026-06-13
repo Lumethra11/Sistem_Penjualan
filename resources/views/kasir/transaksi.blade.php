@@ -14,7 +14,7 @@
 
     <div class="kasir-layout" id="kasirLayout">
 
-        {{-- LEFT: DRAFT SIDEBAR --}}
+        {{-- LEFT PANEL: DRAFT TRANSAKSI --}}
         <div class="draft-container">
             <div class="draft-header">
                 <h2>Draft Transaksi</h2>
@@ -23,7 +23,6 @@
 
             <div class="draft-list">
                 @foreach($drafts as $draft)
-                {{-- Saat draft diklik, panggil JS untuk me-load datanya --}}
                 <div class="draft-card" onclick="loadDraft({{ $draft->id }})">
                     <div class="draft-top">
                         <h4>{{ $draft->jenis_motor ?? 'Motor' }}</h4>
@@ -39,17 +38,18 @@
             </div>
         </div>
 
-        {{-- RIGHT: TRANSACTION PANEL --}}
+        {{-- RIGHT PANEL: TRANSACTION INPUT --}}
         <div class="transaction-panel" id="transactionPanel">
             <form action="{{ route('kasir.store') }}" method="POST" id="formTransaksi">
                 @csrf
-                {{-- Hidden input untuk mendeteksi apakah ini Update Draft atau Buat Baru --}}
+                {{-- Hidden input untuk mendeteksi ID Draft lama --}}
                 <input type="hidden" name="transaksi_id" id="formTransaksiId">
                 
-                {{-- INFO TRANSAKSI --}}
+                {{-- INFORMASI KENDARAAN & SERVIS --}}
                 <div class="panel-section">
                     <h3>Informasi Transaksi</h3>
-                    <div class="form-grid-3"> <input type="text" name="jenis_motor" id="formJenisMotor" placeholder="Jenis Motor">
+                    <div class="form-grid-3"> 
+                        <input type="text" name="jenis_motor" id="formJenisMotor" placeholder="Jenis Motor" required>
                         <select name="metode_pembayaran" id="formMetode">
                             <option value="Tunai">Tunai</option>
                             <option value="Transfer">Transfer</option>
@@ -59,45 +59,55 @@
                     </div>
                 </div>
 
-                {{-- BARANG STOK --}}
+                {{-- DROPDOWN SELECTION BARANG STOK --}}
                 <div class="panel-section">
                     <h3>Tambah Barang Stok</h3>
                     <div class="form-grid-2">
                         <select id="selectBarangStok">
                             <option value="">Pilih Barang Stok</option>
                             @foreach($barangStok as $barang)
-                                <option value="{{ $barang->id }}" data-nama="{{ $barang->nama_barang }}" data-harga="{{ $barang->harga_jual }}">
-                                    {{ $barang->nama_barang }}
+                                <option value="{{ $barang->id }}" 
+                                        data-nama="{{ $barang->nama_barang }}" 
+                                        data-harga="{{ $barang->harga_jual }}"
+                                        data-harga-beli="{{ $barang->harga_beli }}"
+                                        style="{{ $barang->stok <= 0 ? 'color: #EF4444; font-weight: 600;' : '' }}"
+                                        {{ $barang->stok <= 0 ? 'disabled' : '' }}>
+                                    {{ $barang->nama_barang }} (Stok: {{ $barang->stok }} {{ $barang->satuan }}) {{ $barang->stok <= 0 ? '- [HABIS]' : '' }}
                                 </option>
                             @endforeach
                         </select>
-                        <button type="button" class="btn-blue" onclick="addBarangToTable('selectBarangStok', 'stok')">+ Tambah Stok</button>
+                        <button type="button" class="btn-blue" onclick="addBarangToTable('selectBarangStok')">+ Tambah Stok</button>
                     </div>
                 </div>
 
-                {{-- BARANG NON STOK --}}
+                {{-- DROPDOWN SELECTION BARANG NON STOK --}}
                 <div class="panel-section">
                     <h3>Tambah Barang Non Stok</h3>
                     <div class="form-grid-2">
                         <select id="selectBarangNonStok">
                             <option value="">Pilih Barang Non Stok</option>
                             @foreach($barangNonStok as $barang)
-                                <option value="{{ $barang->id }}" data-nama="{{ $barang->nama_barang }}" data-harga="{{ $barang->harga_jual }}">
-                                    {{ $barang->nama_barang }}
+                                <option value="{{ $barang->id }}" 
+                                        data-nama="{{ $barang->nama_barang }}" 
+                                        data-harga="{{ $barang->harga_jual }}"
+                                        data-harga-beli="{{ $barang->harga_beli }}"
+                                        style="{{ $barang->stok <= 0 ? 'color: #EF4444; font-weight: 600;' : '' }}"
+                                        {{ $barang->stok <= 0 ? 'disabled' : '' }}>
+                                    {{ $barang->nama_barang }} (Stok: {{ $barang->stok }} {{ $barang->satuan }}) {{ $barang->stok <= 0 ? '- [HABIS]' : '' }}
                                 </option>
                             @endforeach
                         </select>
-                        <button type="button" class="btn-blue" onclick="addBarangToTable('selectBarangNonStok', 'non_stok')">+ Tambah Non Stok</button>
+                        <button type="button" class="btn-blue" onclick="addBarangToTable('selectBarangNonStok')">+ Tambah Non Stok</button>
                     </div>
                 </div>
 
-                {{-- BARANG MANUAL (Auth Check) --}}
+                {{-- FORM MANUAL BARANG KASIR --}}
                 @if(auth()->user()->can_input_manual_barang)
                 <div class="panel-section manual-section">
                     <h3>Barang Manual</h3>
                     <div class="form-grid-3 mb-2">
                         <input type="text" id="manNama" placeholder="Nama Barang">
-                        <input type="text" id="manSatuan" placeholder="Satuan">
+                        <input type="text" id="manSatuan" placeholder="Satuan (Misal: Pcs)">
                         <input type="text" id="manSupplier" placeholder="Supplier (Opsional)">
                     </div>
                     <div class="form-grid-3">
@@ -108,7 +118,7 @@
                 </div>
                 @endif
 
-                {{-- TABEL ITEM TRANSAKSI --}}
+                {{-- LIST ITEM KASIR --}}
                 <div class="items-table-container">
                     <table class="items-table">
                         <thead>
@@ -128,10 +138,9 @@
                     </table>
                 </div>
 
-                {{-- SUMMARY --}}
+                {{-- RINGKASAN TAGIHAN & PEMBAYARAN --}}
                 <div class="summary-section">
                     <input type="hidden" name="total_tagihan" id="inputTotalTagihan" value="0">
-                    
                     <div class="summary-row">
                         <span>Total Barang</span>
                         <span id="textTotalBarang">Rp. 0</span>
@@ -157,7 +166,6 @@
                 <div class="action-buttons">
                     <button type="button" class="btn-red" onclick="clearFormAndTable()">Clear</button>
                     <div class="right-actions">
-                        {{-- Bedakan Value Tombol agar dibaca oleh Controller --}}
                         <button type="submit" name="submit_type" value="draft" class="btn-dark-blue">Simpan Draft</button>
                         <button type="submit" name="submit_type" value="selesai" class="btn-green">Cetak</button>
                     </div>
@@ -167,40 +175,61 @@
     </div>
 </div>
 
-{{-- LOGIKA JAVASCRIPT --}}
+{{-- MODAL POPUP JIKA OPERASI BACKEND ERROR / SUKSES --}}
+@if(session('error'))
+<div class="modal-overlay active" id="alertModalError" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+    <div class="modal-content alert-modal" style="background: #fff; padding: 30px; border-radius: 12px; width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div class="alert-icon error" style="background: #FEE2E2; color: #EF4444; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; font-weight: bold;">&times;</div>
+        <h2 style="font-size: 20px; font-weight: 700; color: #0F172A; margin-bottom: 8px;">Transaksi Gagal!</h2>
+        <p style="font-size: 14px; color: #64748B; margin-bottom: 24px; line-height: 1.5;">{{ session('error') }}</p>
+        <button type="button" class="btn-blue" onclick="document.getElementById('alertModalError').remove()" style="width: 100%; background: #2563EB; color: #fff; height: 44px; border: none; border-radius: 8px; font-weight: 600;">Tutup</button>
+    </div>
+</div>
+@endif
+
+@if(session('success'))
+<div class="modal-overlay active" id="alertModalSuccess" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+    <div class="modal-content alert-modal" style="background: #fff; padding: 30px; border-radius: 12px; width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div class="alert-icon success" style="background: #DCFCE7; color: #22C55E; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; font-weight: bold;">&#10003;</div>
+        <h2 style="font-size: 20px; font-weight: 700; color: #0F172A; margin-bottom: 8px;">Berhasil!</h2>
+        <p style="font-size: 14px; color: #64748B; margin-bottom: 24px; line-height: 1.5;">{{ session('success') }}</p>
+        <button type="button" class="btn-blue" onclick="document.getElementById('alertModalSuccess').remove()" style="width: 100%; background: #2563EB; color: #fff; height: 44px; border: none; border-radius: 8px; font-weight: 600;">Tutup</button>
+    </div>
+</div>
+@endif
+
+{{-- JAVASCRIPT ENGINE KASIR --}}
 <script>
-    // Tarik data drafts dari Backend ke JavaScript
     const draftsData = @json($drafts);
     let cartIndex = 0;
 
-    // Buka panel kosong untuk transaksi baru
     function openNewTransaction() {
         clearFormAndTable();
         document.getElementById('kasirLayout').classList.add('panel-open');
     }
 
-    // Load data dari draft yang diklik
     function loadDraft(id) {
-        clearFormAndTable(); // Kosongkan dulu
+        clearFormAndTable();
         
         let draft = draftsData.find(d => d.id === id);
         if(draft) {
-            // Isi Identitas Draft
             document.getElementById('formTransaksiId').value = draft.id;
             document.getElementById('formJenisMotor').value = draft.jenis_motor || '';
             document.getElementById('formMetode').value = draft.metode_pembayaran || 'Tunai';
             document.getElementById('formBiayaJasa').value = draft.biaya_jasa_servis || 0;
 
-            // Load Detail Barang
             if(draft.details && draft.details.length > 0) {
                 draft.details.forEach(detail => {
+                    // JIKA BARANG DB BERHASIL DIDAPAT, PAKAI NAMA MASTER. JIKA KOSONG/NULL (BARANG MANUAL DRAFT), AMBIL DARI STRING NAMA_BARANG_MANUAL
+                    let namaItem = detail.barang_id ? (detail.barang ? detail.barang.nama_barang : '-') : detail.nama_barang_manual;
+                    
                     renderRowHtml({
                         id: detail.barang_id,
-                        nama: detail.barang_id ? (detail.barang ? detail.barang.nama_barang : '-') : detail.nama_barang_manual,
-                        harga: parseFloat(detail.harga_jual_satuan),
-                        harga_beli: parseFloat(detail.harga_modal),
-                        qty: parseInt(detail.jumlah)
-                    }, detail.barang_id === null); // Jika barang_id null, berarti manual
+                        nama: namaItem,
+                        harga: parseFloat(detail.harga_jual_satuan) || 0,
+                        harga_beli: parseFloat(detail.harga_modal) || 0,
+                        qty: parseInt(detail.jumlah) || 1
+                    }, detail.barang_id === null);
                 });
             }
 
@@ -209,31 +238,36 @@
         }
     }
 
-    // Tambah dari Dropdown
-    function addBarangToTable(selectElementId, tipe) {
+    function addBarangToTable(selectElementId) {
         let select = document.getElementById(selectElementId);
         if(select.value === "") return alert("Pilih barang terlebih dahulu!");
 
         let option = select.options[select.selectedIndex];
+        
+        if(option.disabled) {
+            alert("Barang ini tidak dapat dipilih karena stok di toko sudah habis (0)!");
+            select.value = "";
+            return;
+        }
+
         renderRowHtml({
             id: option.value,
             nama: option.getAttribute('data-nama'),
             harga: parseFloat(option.getAttribute('data-harga')) || 0,
-            harga_beli: 0,
+            harga_beli: parseFloat(option.getAttribute('data-harga-beli')) || 0,
             qty: 1
         }, false);
         
         select.value = "";
     }
 
-    // Tambah Manual
     function addManualToTable() {
         let nama = document.getElementById('manNama').value;
         let satuan = document.getElementById('manSatuan').value;
         let hargaBeli = document.getElementById('manHargaBeli').value;
         let hargaJual = document.getElementById('manHargaJual').value;
         
-        if(!nama || !hargaJual) return alert("Nama dan Harga Jual wajib diisi!");
+        if(!nama || !hargaJual) return alert("Nama barang dan Harga Jual wajib diisi!");
 
         renderRowHtml({
             id: null, 
@@ -243,10 +277,9 @@
             qty: 1
         }, true);
 
-        // Reset inputs manual
         document.getElementById('manNama').value = '';
         document.getElementById('manSatuan').value = '';
-        document.getElementById('manSupplier').value = '';
+        if(document.getElementById('manSupplier')) document.getElementById('manSupplier').value = '';
         document.getElementById('manHargaBeli').value = '';
         document.getElementById('manHargaJual').value = '';
     }
@@ -258,11 +291,12 @@
         let tr = document.createElement('tr');
         tr.id = `row-${cartIndex}`;
         
+        // Input hidden barang_id tetap kosong/null jika item bersifat manual, agar dibaca sebagai entri baru oleh controller saat DICETAK final
         let hiddenId = isManual ? '' : `<input type="hidden" name="items[${cartIndex}][barang_id]" value="${item.id}">`;
         
         tr.innerHTML = `
             <td>
-                ${item.nama}
+                <strong>${item.nama}</strong> ${isManual ? '<span style="color:#2563EB; font-size:11px; font-weight:600;">(Manual)</span>' : ''}
                 ${hiddenId}
                 <input type="hidden" name="items[${cartIndex}][nama_barang]" value="${item.nama}">
                 <input type="hidden" name="items[${cartIndex}][harga]" value="${item.harga}">
@@ -290,7 +324,12 @@
     }
 
     function updateSubtotal(index, harga) {
-        let qty = document.querySelector(`#row-${index} .qty-input`).value;
+        let qtyInput = document.querySelector(`#row-${index} .qty-input`);
+        let qty = parseInt(qtyInput.value) || 1;
+        if(qty < 1) {
+            qty = 1;
+            qtyInput.value = 1;
+        }
         let sub = harga * qty;
         let subTd = document.getElementById(`subtotal-text-${index}`);
         subTd.setAttribute('data-subtotal', sub);
@@ -298,24 +337,18 @@
         kalkulasiTotal();
     }
 
-    // Kalkulasi Total yang sudah mengakomodir Jasa Servis
     function kalkulasiTotal() {
-        // Hitung total barang saja
         let subtotals = document.querySelectorAll('.subtotal-val');
         let totalBarang = 0;
         subtotals.forEach(el => {
-            totalBarang += parseFloat(el.getAttribute('data-subtotal'));
+            totalBarang += parseFloat(el.getAttribute('data-subtotal')) || 0;
         });
 
-        // Ambil Jasa Servis
         let biayaJasa = parseFloat(document.getElementById('formBiayaJasa').value) || 0;
-        
-        // Total Seluruhnya
         let totalAkhir = totalBarang + biayaJasa;
 
         document.getElementById('textTotalBarang').innerText = `Rp. ${formatRupiah(totalBarang)}`;
         document.getElementById('textJasaServis').innerText = `Rp. ${formatRupiah(biayaJasa)}`;
-        
         document.getElementById('inputTotalTagihan').value = totalAkhir;
         document.getElementById('textTotalAkhir').innerText = `Rp. ${formatRupiah(totalAkhir)}`;
         
@@ -331,10 +364,9 @@
         document.getElementById('textKembalian').innerText = `Rp. ${formatRupiah(kembali)}`;
     }
 
-    // Clear sepenuhnya untuk new transaction
     function clearFormAndTable() {
         document.getElementById('formTransaksi').reset();
-        document.getElementById('formTransaksiId').value = ''; // Reset ID
+        document.getElementById('formTransaksiId').value = '';
         document.querySelectorAll('tr[id^="row-"]').forEach(tr => tr.remove());
         document.getElementById('emptyRow').style.display = '';
         kalkulasiTotal();
