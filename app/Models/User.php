@@ -45,6 +45,6 @@ class User extends Authenticatable
     // Admin -> Banyak Kasir
     public function kasirs()
     {
-        return $this->hasMany(User::class, 'Admin_id');
+        return $this->hasMany(User::class, 'admin_id');
     }
 }

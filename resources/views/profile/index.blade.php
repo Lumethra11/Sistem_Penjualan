@@ -5,7 +5,7 @@
 @section('content')
 <div class="profile-page">
 
-    {{-- TOAST ALERET --}}
+    {{-- TOAST ALERT --}}
     @if(session('success'))
         <div class="toast-alert">
             <i class="fa-solid fa-circle-check"></i>
@@ -35,7 +35,7 @@
             </div>
         </div>
 
-        {{-- PROFILE INFO --}}
+        {{-- PROFILE INFO GRID --}}
         <div class="profile-info-grid">
 
             <div class="info-box">
@@ -70,7 +70,6 @@
                     </div>
                 </div>
 
-                {{-- FIXED: Alamat sekarang mutlak milik Admin/Toko --}}
                 <div class="info-box">
                     <div class="info-label">
                         <i class="fa-solid fa-location-dot"></i>
@@ -104,7 +103,6 @@
                     </div>
                 </div>
 
-                {{-- FIXED: Data Alamat Toko Utama diambil secara dinamis lewat relasi Admin --}}
                 <div class="info-box full-width">
                     <div class="info-label">
                         <i class="fa-solid fa-location-dot"></i>
@@ -118,7 +116,7 @@
 
         </div>
 
-        {{-- ACTION --}}
+        {{-- ACTION BUTTON --}}
         <div class="profile-actions">
             <a href="{{ route('profile.edit') }}" class="btn btn-primary">
                 <i class="fa-solid fa-user-pen" style="margin-right: 8px;"></i>
