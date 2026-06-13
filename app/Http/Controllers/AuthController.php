@@ -100,9 +100,18 @@ class AuthController extends Controller
         ];
 
         if (Auth::attempt($credentials)) {
+
             $request->session()->regenerate();
+
+            $user = Auth::user();
+
+            if ($user->role === 'kasir') {
+                return redirect()->route('kasir.transaksi')
+                    ->with('success', 'Selamat datang, ' . $user->name);
+            }
+
             return redirect()->route('dashboard')
-                ->with('success', 'Selamat datang, ' . Auth::user()->name);
+                ->with('success', 'Selamat datang, ' . $user->name);
         }
 
         return back()

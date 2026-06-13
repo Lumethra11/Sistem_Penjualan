@@ -6,24 +6,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ManajemenBarangController;
 use App\Http\Controllers\KelolaUserController;
 use App\Http\Controllers\KasirController;
+use App\Http\Controllers\DashboardController;
 
-/*
-|--------------------------------------------------------------------------
-| REDIRECT ROOT
-|--------------------------------------------------------------------------
-*/
+// Landing Page
 Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-    return redirect()->route('login');
-});
+    return view('welcome');
+})->name('welcome');
 
-/*
-|--------------------------------------------------------------------------
-| GUEST (BELUM LOGIN)
-|--------------------------------------------------------------------------
-*/
+// Route untuk pengguna yang belum login
 Route::middleware('guest')->group(function () {
 
     Route::get('/login', [AuthController::class, 'loginForm'])
@@ -37,20 +27,17 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
 });
 
-/*
-|--------------------------------------------------------------------------
-| AUTH (SUDAH LOGIN)
-|--------------------------------------------------------------------------
-*/
+// Route untuk pengguna yang sudah login
 Route::middleware('auth')->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('dashboard.index'); // ✅ FIX DI SINI
-    })->name('dashboard');
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Logout
     Route::post('/logout', [AuthController::class, 'logout'])
         ->name('logout');
 
+    // Profile
     Route::get('/profile', [ProfileController::class, 'index'])
         ->name('profile');
 
@@ -60,45 +47,54 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile/update', [ProfileController::class, 'update'])
         ->name('profile.update');
 
-    Route::get('/manajemenbarang/databarang', [ManajemenBarangController::class, 'dataBarang'])
-        ->name('manajemenbarang.databarang');
+    // Manajemen Barang
+    Route::prefix('manajemenbarang')->name('manajemenbarang.')->group(function () {
 
-    Route::delete('/manajemenbarang/{id}', [ManajemenBarangController::class, 'destroy'])
-        ->name('manajemenbarang.destroy');
+        Route::get('/databarang', [ManajemenBarangController::class, 'dataBarang'])
+            ->name('databarang');
 
-    Route::get('/manajemenbarang/{id}/edit', [ManajemenBarangController::class, 'edit'])
-        ->name('manajemenbarang.edit');
-    
-    Route::put('/manajemenbarang/{id}', [ManajemenBarangController::class, 'update'])
-        ->name('manajemenbarang.update');
+        Route::get('/formbarang', [ManajemenBarangController::class, 'formBarang'])
+            ->name('formbarang');
 
-    Route::get('/manajemenbarang/formbarang', [ManajemenBarangController::class, 'formBarang'])
-        ->name('manajemenbarang.formbarang');
+        Route::post('/store', [ManajemenBarangController::class, 'store'])
+            ->name('store');
 
-    Route::post('/manajemenbarang/store', [ManajemenBarangController::class, 'store'])
-        ->name('manajemenbarang.store');
+        Route::post('/import', [ManajemenBarangController::class, 'import'])
+            ->name('import');
 
-    Route::post('/manajemenbarang/import', [ManajemenBarangController::class, 'import'])
-        ->name('manajemenbarang.import');
+        Route::get('/template', [ManajemenBarangController::class, 'downloadTemplate'])
+            ->name('template');
 
-    Route::get('/manajemenbarang/template', [ManajemenBarangController::class, 'downloadTemplate'])
-        ->name('manajemenbarang.template');
+        Route::get('/{id}/edit', [ManajemenBarangController::class, 'edit'])
+            ->name('edit');
 
-    Route::get('/tambah-user', [KelolaUserController::class, 'tambahUser'])
-        ->name('kelolauser.tambah');
+        Route::put('/{id}', [ManajemenBarangController::class, 'update'])
+            ->name('update');
 
-    Route::post('/store', [KelolaUserController::class, 'store'])
-        ->name('kelolauser.store');
+        Route::delete('/{id}', [ManajemenBarangController::class, 'destroy'])
+            ->name('destroy');
+    });
 
-    Route::get('/daftar-user', [KelolaUserController::class, 'daftarUser'])
-        ->name('kelolauser.daftar');
+    // Kelola User
+    Route::prefix('kelola-user')->name('kelolauser.')->group(function () {
 
-    Route::put('/kelola-user/status/{id}', [KelolaUserController::class, 'toggleStatus'])
-        ->name('kelolauser.status');
-    
-    Route::put('/kelola-user/manual-permission/{id}', [KelolaUserController::class, 'toggleManualPermission'])
-        ->name('kelolauser.manual.permission');
+        Route::get('/tambah', [KelolaUserController::class, 'tambahUser'])
+            ->name('tambah');
 
+        Route::post('/store', [KelolaUserController::class, 'store'])
+            ->name('store');
+
+        Route::get('/daftar', [KelolaUserController::class, 'daftarUser'])
+            ->name('daftar');
+
+        Route::put('/status/{id}', [KelolaUserController::class, 'toggleStatus'])
+            ->name('status');
+
+        Route::put('/manual-permission/{id}', [KelolaUserController::class, 'toggleManualPermission'])
+            ->name('manual.permission');
+    });
+
+    // Kasir
     Route::prefix('kasir')->name('kasir.')->group(function () {
 
         Route::get('/', [KasirController::class, 'index'])
@@ -115,19 +111,15 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/nota/{id}', [KasirController::class, 'nota'])
             ->name('nota');
-
+    });
 });
 
-});
-
-/*
-|--------------------------------------------------------------------------
-| FALLBACK (JIKA URL TIDAK ADA)
-|--------------------------------------------------------------------------
-*/
+// Jika URL tidak ditemukan
 Route::fallback(function () {
+
     if (auth()->check()) {
         return redirect()->route('dashboard');
     }
-    return redirect()->route('login'); // ✅ jangan ke welcome
+
+    return redirect()->route('welcome');
 });
