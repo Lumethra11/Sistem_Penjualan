@@ -26,13 +26,11 @@ class Transaksi extends Model
     | RELATIONSHIP
     |--------------------------------------------------------------------------
     */
-
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Ubah nama method ini menjadi "details" agar dikenali oleh Controller
     public function details()
     {
         return $this->hasMany(DetailTransaksi::class, 'transaksi_id');

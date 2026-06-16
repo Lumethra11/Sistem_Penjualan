@@ -7,6 +7,7 @@ use App\Http\Controllers\ManajemenBarangController;
 use App\Http\Controllers\KelolaUserController;
 use App\Http\Controllers\KasirController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LaporanController;
 
 // Landing Page
 Route::get('/', function () {
@@ -117,6 +118,13 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/nota/{id}', [KasirController::class, 'nota'])
             ->name('nota');
+    });
+
+    // Laporan
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        
+        Route::get('/', [LaporanController::class, 'index'])
+            ->name('index');
     });
 });
 

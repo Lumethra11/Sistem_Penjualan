@@ -23,10 +23,34 @@ class DetailTransaksi extends Model
 
     /*
     |--------------------------------------------------------------------------
+    | ACCESSOR PINTAR (Mencegah Nama Barang Manual Kasir Hilang)
+    |--------------------------------------------------------------------------
+    */
+    // Panggil Atribut ini di Blade/Controller dengan cara: $detail->nama_produk
+    public function getNamaProdukAttribute()
+    {
+        if ($this->barang_id && $this->barang) {
+            return $this->barang->nama_barang;
+        }
+        
+        return $this->nama_barang_manual ?? '-';
+    }
+
+    // Panggil Atribut ini untuk Kode Barang dengan cara: $detail->kode_produk
+    public function getKodeProdukAttribute()
+    {
+        if ($this->barang_id && $this->barang) {
+            return $this->barang->kode_barang;
+        }
+        
+        return 'MANUAL';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | RELATIONSHIP
     |--------------------------------------------------------------------------
     */
-
     public function transaksi()
     {
         return $this->belongsTo(Transaksi::class, 'transaksi_id');

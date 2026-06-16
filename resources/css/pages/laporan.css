@@ -1,0 +1,245 @@
+/* =========================================================
+   MAIN APPLICATION FRAMEWORK
+========================================================= */
+.laporan-main-container {
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.laporan-main-container h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 24px;
+}
+
+/* =========================================================
+   KONTAINER ATAS: FILTER PANEL SEPARATED CARD
+========================================================= */
+.filter-card-container {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    margin-bottom: 24px;
+}
+
+.filter-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+.filter-group input, .filter-group select {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #1E293B;
+    background-color: #FFFFFF;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.filter-group input:focus, .filter-group select:focus {
+    border-color: #2F5BD3;
+    box-shadow: 0 0 0 3px rgba(47, 91, 211, 0.12);
+}
+
+/* EXPORT FILE ACTION ACTION BAR */
+.export-button-action-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px solid #F1F5F9;
+    padding-top: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-export {
+    height: 40px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.2s;
+}
+
+.btn-export.excel { background-color: #22C55E; }
+.btn-export.pdf { background-color: #EF4444; }
+.btn-export:hover { opacity: 0.9; }
+
+/* =========================================================
+   KONTAINER BAWAH: PREVIEW TABLE SEPARATED CARD
+========================================================= */
+.preview-table-container {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 28px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.table-header-title-section {
+    margin-bottom: 20px;
+    border-bottom: 2px solid #F8FAFC;
+    padding-bottom: 14px;
+}
+
+.table-header-title-section h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1E293B;
+    margin: 0;
+}
+
+.table-header-title-section h3 span { color: #2F5BD3; }
+
+/* LAYOUT JANGAN DI FIT: SCROLL MENYAMPING SCROLLABLE */
+.responsive-table-wrapper {
+    width: 100%;
+    overflow-x: auto; 
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+}
+
+/* CORE TABLE RULES */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    white-space: nowrap; 
+}
+
+table thead tr {
+    background-color: #F8FAFC;
+}
+
+table th {
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    border-bottom: 2px solid #E2E8F0;
+}
+
+table td {
+    padding: 16px;
+    font-size: 14px;
+    color: #334155;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+}
+
+table tr:hover td {
+    background-color: #FAFAFA;
+}
+
+/* MIN WIDTH COLUMN SYSTEM FOR HORIZONTAL SCROLL */
+.col-tanggal { min-width: 140px; }
+.col-ref { min-width: 130px; }
+.col-kode { min-width: 120px; }
+.col-nama { min-width: 320px; } /* Lebar ekstra untuk nama produk */
+.col-qty { min-width: 70px; }
+.col-harga { min-width: 130px; }
+.col-subtotal { min-width: 140px; }
+.col-operator { min-width: 130px; }
+
+/* DECORATIONS */
+.invoice-badge {
+    background-color: #F1F5F9;
+    color: #334155;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.code-badge {
+    background-color: #EFF6FF;
+    color: #2563EB;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.operator-badge {
+    background-color: #F5F3FF;
+    color: #7C3AED;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.bold-text-item-name {
+    font-weight: 600;
+    color: #0F172A;
+}
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+.empty-data-text-row {
+    text-align: center;
+    color: #64748B;
+    padding: 50px 0;
+    font-style: italic;
+}
+
+/* FOOTER GRAND TOTAL RINGKASAN */
+.footer-summary-row {
+    background-color: #F8FAFC;
+    border-top: 2px solid #CBD5E1;
+}
+
+.footer-summary-row td {
+    padding: 18px 16px;
+    border-bottom: none;
+}
+
+.grand-total-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #475569;
+    letter-spacing: 0.5px;
+}
+
+.grand-total-money {
+    font-size: 16px;
+    font-weight: 800;
+    color: #2F5BD3;
+}
+
+/* RESPONSIVE LAYOUT */
+@media (max-width: 768px) {
+    .filter-card-container { padding: 16px; }
+    .preview-table-container { padding: 16px; }
+}

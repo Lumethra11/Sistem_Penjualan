@@ -29,8 +29,8 @@
             </li>
 
             <li>
-                <a href="#"
-                   class="sidebar-link {{ request()->routeIs('laporan.*') ? 'active' : '' }}">
+                <a href="{{ route('laporan.index') }}"
+                class="sidebar-link {{ request()->routeIs('laporan.*') ? 'active' : '' }}">
                     <i class="fa-regular fa-file-lines"></i>
                     <span>Laporan</span>
                 </a>
