@@ -16,6 +16,7 @@
         .line { border-bottom: 1px dashed #000; margin: 10px 0; }
         table { width: 100%; border-collapse: collapse; }
         td, th { padding: 4px 0; vertical-align: top; }
+        th { text-align: left; }
         
         .header-section p {
             margin: 4px 0 0 0;
@@ -41,12 +42,23 @@
             $namaToko = $userAktif->nama_toko ?? 'BENGKEL AA MOTOR';
             $alamatToko = $userAktif->alamat ?? '';
         }
+
+        // LOGIKA AMBIL NOMINAL BAYAR & KEMBALIAN
+        // Memeriksa apakah kolom bayar/kembalian ada di database, jika tidak ada pakai fallback request dinamis
+        $nominalBayar = $transaksi->bayar ?? $transaksi->diterima ?? request('nominal_bayar', 0);
+        $kembalian = $transaksi->kembalian ?? request('kembalian', 0);
+
+        // Jika data di atas masih 0 dan transaksinya tunai, kita coba kalkulasi atau ambil dari input halaman sebelumnya
+        if ($transaksi->metode_pembayaran === 'Tunai' && $nominalBayar == 0) {
+            // Mengambil state dari pengisian form jika dilemparkan via session/request
+            $nominalBayar = session('nominal_bayar') ?? 0;
+            $kembalian = session('kembalian') ?? 0;
+        }
     @endphp
 
     {{-- HEADER NOTA KEMBALI KE DESAIN AWAL YANG COCOK DAN BAGUS --}}
     <div class="center header-section">
         <h2>{{ $namaToko }}</h2>
-        {{-- Menggunakan nl2br untuk mengantisipasi spasasi baris data alamat text database --}}
         <p>{!! nl2br(e($alamatToko)) !!}</p>
     </div>
 
@@ -108,9 +120,21 @@
         </tr>
         @endif
         <tr>
-            <th>TOTAL</th>
+            <th>TOTAL TAGIHAN</th>
             <th class="text-right">Rp {{ number_format($transaksi->total_harga, 0, ',', '.') }}</th>
         </tr>
+
+        {{-- TAMBAHAN FITUR: Menampilkan Cash/Tunai, Bayar, dan Kembalian --}}
+        @if($transaksi->metode_pembayaran === 'Tunai' && $nominalBayar > 0)
+        <tr>
+            <td>Dibayar (Tunai)</td>
+            <td class="text-right">{{ number_format($nominalBayar, 0, ',', '.') }}</td>
+        </tr>
+        <tr>
+            <td>Kembalian</td>
+            <td class="text-right">{{ number_format($kembalian, 0, ',', '.') }}</td>
+        </tr>
+        @endif
     </table>
 
     <div class="line"></div>

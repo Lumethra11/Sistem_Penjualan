@@ -16,6 +16,8 @@ return new class extends Migration
             $table->integer('biaya_jasa_servis')->default(0);
             $table->integer('total_harga');
             $table->string('metode_pembayaran');
+            $table->integer('bayar')->default(0);
+            $table->integer('kembalian')->default(0);
             $table->enum('status', ['draft', 'selesai', 'dibatalkan'])->default('draft');
             $table->timestamps();
         });

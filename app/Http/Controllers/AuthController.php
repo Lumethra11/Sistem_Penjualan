@@ -31,7 +31,7 @@ class AuthController extends Controller
             'username'    => 'required|string|max:50|unique:users,username',
             'email'       => 'required|email|unique:users,email',
             'nama_toko'   => 'required|string|max:100|unique:users,nama_toko',
-            'alamat'      => 'required|string', // <-- 1. TAMBAHKAN VALIDASI ALAMAT DI SINI
+            'alamat'      => 'required|string', 
             'no_telp'     => 'nullable|string|max:20|unique:users,no_telp',
             'password'    => 'required|string|min:5|confirmed',
         ], [
@@ -50,7 +50,7 @@ class AuthController extends Controller
             'nama_toko.max'        => 'Nama toko maksimal 100 karakter',
             'nama_toko.unique'     => 'Nama toko sudah terdaftar, gunakan nama unik lain',
 
-            'alamat.required'      => 'Alamat toko wajib diisi', // <-- 2. TAMBAHKAN PESAN ERROR ALAMAT
+            'alamat.required'      => 'Alamat toko wajib diisi', 
 
             'no_telp.max'          => 'No telepon maksimal 20 karakter',
             'no_telp.unique'       => 'No telepon sudah terdaftar pada akun lain',
@@ -67,7 +67,7 @@ class AuthController extends Controller
             'username'    => $request->username,
             'email'       => $request->email,
             'nama_toko'   => $request->nama_toko,
-            'alamat'      => $request->alamat, // <-- 3. MASUKKAN DATA ALAMAT AGAR DISIMPAN KE DATABASE
+            'alamat'      => $request->alamat, 
             'no_telp'     => $request->no_telp,
             'password'    => Hash::make($request->password),
         ]);
@@ -78,7 +78,7 @@ class AuthController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | Login
+    | Login (Clean Redirect Tanpa Flash Success Pengganggu)
     |--------------------------------------------------------------------------
     */
     public function login(Request $request)
@@ -105,13 +105,18 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
+            // FIX: Langsung arahkan tanpa membawa flash session success (.with)
             if ($user->role === 'kasir') {
-                return redirect()->route('kasir.transaksi')
-                    ->with('success', 'Selamat datang, ' . $user->name);
+                return redirect()->route('kasir.transaksi');
             }
 
-            return redirect()->route('dashboard')
-                ->with('success', 'Selamat datang, ' . $user->name);
+            if ($user->role === 'admin') {
+                return redirect()->route('dashboard');
+            }
+
+            // Keamanan tambahan jika role di luar ekspektasi
+            Auth::logout();
+            return redirect()->route('login')->with('error', 'Akses ditolak: Role akun tidak valid.');
         }
 
         return back()

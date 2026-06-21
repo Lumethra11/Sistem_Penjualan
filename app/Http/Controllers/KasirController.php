@@ -47,14 +47,32 @@ class KasirController extends Controller
         DB::beginTransaction();
 
         try {
-            // 1. UPDATE ATAU BUAT TRANSAKSI UTAMA (HEAD)
+            // =========================================================
+            // 1. HITUNG NOMINAL PEMBAYARAN DAN KEMBALIAN SECARA AMAN
+            // =========================================================
+            $totalHarga = $request->total_tagihan ?? 0;
+            
+            // Ambil nominal bayar dari input form jika metodenya Tunai, jika non-tunai samakan dengan total harga
+            $bayar = $request->metode_pembayaran === 'Tunai' ? ($request->bayar ?? 0) : $totalHarga;
+            
+            // Hitung nilai kembalian
+            $kembalian = $bayar - $totalHarga;
+            if ($kembalian < 0) { 
+                $kembalian = 0; 
+            }
+
+            // =========================================================
+            // 2. UPDATE ATAU BUAT TRANSAKSI UTAMA (HEAD)
+            // =========================================================
             if ($request->transaksi_id) {
                 $transaksi = Transaksi::findOrFail($request->transaksi_id);
                 $transaksi->update([
                     'jenis_motor' => $request->jenis_motor,
-                    'total_harga' => $request->total_tagihan ?? 0,
+                    'total_harga' => $totalHarga,
                     'biaya_jasa_servis' => $biayaJasa,
                     'metode_pembayaran' => $request->metode_pembayaran,
+                    'bayar' => $bayar,               // <-- Menyimpan nominal uang masuk
+                    'kembalian' => $kembalian,       // <-- Menyimpan nominal uang kembalian
                     'status' => $status,
                 ]);
                 
@@ -65,14 +83,18 @@ class KasirController extends Controller
                     'no_invoice' => 'INV-' . strtoupper(Str::random(5)),
                     'user_id' => Auth::id(),
                     'jenis_motor' => $request->jenis_motor,
-                    'total_harga' => $request->total_tagihan ?? 0,
+                    'total_harga' => $totalHarga,
                     'biaya_jasa_servis' => $biayaJasa,
                     'metode_pembayaran' => $request->metode_pembayaran,
+                    'bayar' => $bayar,               // <-- Menyimpan nominal uang masuk
+                    'kembalian' => $kembalian,       // <-- Menyimpan nominal uang kembalian
                     'status' => $status,
                 ]);
             }
 
-            // 2. PROSES DETAIL ITEMS & LOGIKA MUTASI STOK
+            // =========================================================
+            // 3. PROSES DETAIL ITEMS & LOGIKA MUTASI STOK
+            // =========================================================
             if ($request->has('items')) {
                 foreach ($request->items as $item) {
                     $barangId = !empty($item['barang_id']) ? $item['barang_id'] : null;
@@ -81,9 +103,7 @@ class KasirController extends Controller
                     $hargaJual = $item['harga'] ?? 0;
                     $qty = intval($item['qty']);
 
-                    // =========================================================
                     // EKSEKUSI JIKA TRANSAKSI "CETAK" (SELESAI FINAL)
-                    // =========================================================
                     if ($status === 'selesai') {
                         
                         // JIKA BARANG MANUAL (Belum ada barang_id dari database)
@@ -152,9 +172,10 @@ class KasirController extends Controller
                                     throw new \Exception("Gagal Cetak! Stok untuk '" . $barang->nama_barang . "' tidak mencukupi (Sisa: " . $barang->stok . ").");
                                 }
                                 $barang->decrement('stok', $qty);
+                                $sisaStokLog = $barang->stok;
                             } else {
-                                // Tipe Non-Stok tetap dikurangi penjualannya agar pelacakan data sisa sinkron
-                                $barang->decrement('stok', $qty);
+                                // Tipe Non-Stok dikunci di angka 0 agar tidak minus ke database master
+                                $sisaStokLog = 0;
                             }
 
                             // Catat log pengeluaran ke histori_stok
@@ -162,7 +183,7 @@ class KasirController extends Controller
                                 'barang_id' => $barang->id,
                                 'jenis_pergerakan' => 'keluar',
                                 'jumlah' => $qty,
-                                'sisa_stok_saat_ini' => $barang->stok,
+                                'sisa_stok_saat_ini' => $sisaStokLog,
                                 'keterangan' => 'Penjualan Selesai Nota ' . $transaksi->no_invoice,
                                 'created_at' => now(),
                                 'updated_at' => now()
@@ -170,10 +191,7 @@ class KasirController extends Controller
                         }
                     }
 
-                    // =========================================================
-                    // JIKA HANYA "SIMPAN DRAFT" / MENDRAFT ULANG
-                    // =========================================================
-                    // Masukkan item ke detail transaksi tanpa memotong stok fisik master apa pun
+                    // MASUKKAN ITEM KE DETAIL TRANSAKSI
                     DetailTransaksi::create([
                         'transaksi_id' => $transaksi->id,
                         'barang_id' => $barangId, // Bernilai null jika draft & manual

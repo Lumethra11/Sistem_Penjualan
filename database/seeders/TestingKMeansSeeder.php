@@ -25,7 +25,7 @@ class TestingKMeansSeeder extends Seeder
         User::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // 2. SEEDER USER: ADMIN & KASIR
+        // 2. SEEDER USER: ADMIN & KASIR (MUTLAK TERKUNCI RELASI)
         $admin = User::create([
             'admin_id' => null,
             'role' => 'admin',
@@ -54,7 +54,7 @@ class TestingKMeansSeeder extends Seeder
             'password' => Hash::make('password123'),
         ]);
 
-        // 3. MASTER DATA: 20 BARANG DENGAN STOK AWAL LEBIH AMAN & BESAR
+        // 3. MASTER DATA: 20 BARANG TESTER DENGAN FORMAT ASOSIATIF SINKRON 100%
         $masterBarang = [
             ['kode_barang' => 'OLI001', 'nama_barang' => 'Oli MPX 2 0.8L Matik', 'stok' => 50, 'satuan' => 'Botol', 'harga_beli' => 45000, 'harga_jual' => 55000, 'kategori' => 'Pelumas', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
             ['kode_barang' => 'OLI002', 'nama_barang' => 'Oli SPX 2 1L Matik Super', 'stok' => 45, 'satuan' => 'Botol', 'harga_beli' => 58000, 'harga_jual' => 70000, 'kategori' => 'Pelumas', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
@@ -80,97 +80,129 @@ class TestingKMeansSeeder extends Seeder
             ['kode_barang' => 'CBL002', 'nama_barang' => 'Kabel Kopling Sport Tiger Revo', 'stok' => 35, 'satuan' => 'Pcs', 'harga_beli' => 30000, 'harga_jual' => 45000, 'kategori' => 'Kabel', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
         ];
 
-        $barangInstances = [];
-        foreach ($masterBarang as $mb) {
-            $barangInstances[$mb['kode_barang']] = Barang::create($mb);
-        }
-
-        $fastMovingKodes = ['OLI001', 'OLI002', 'OLI003', 'BSI001', 'BKT001', 'BKT002'];
-        $slowMovingKodes = ['BAN001', 'BAN002', 'AKI001', 'AKI002', 'VBL001', 'VBL002', 'RLR001', 'FLT001', 'FLT002', 'LMP001', 'RNT001', 'SKR001', 'CBL001', 'CBL002'];
-
-        // 4. GENERATE TEPAT 5 TRANSAKSI SEHARI SELAMA 7 HARI (35 NOTA REAL)
-        for ($hari = 6; $hari >= 0; $hari--) {
-            $tanggalTransaksi = Carbon::now()->subDays($hari);
-
-            for ($inv = 1; $inv <= 5; $inv++) {
-                $waktuSpesifik = clone $tanggalTransaksi;
-                $waktuSpesifik->setTime(rand(8, 16), rand(10, 59));
-
-                $noInvoice = 'INV-' . $waktuSpesifik->format('ymd') . str_pad($inv, 3, '0', STR_PAD_LEFT);
-                
-                $transaksi = Transaksi::create([
-                    'no_invoice'        => $noInvoice,
-                    'user_id'           => $kasir->id,
-                    'jenis_motor'       => ['Beat FI', 'Vario 125', 'Scoopy ESP', 'Mio M3', 'Supra X 125'][rand(0, 4)],
-                    'biaya_jasa_servis' => [0, 25000, 35000][rand(0, 2)],
-                    'total_harga'       => 0,
-                    'metode_pembayaran' => ['Tunai', 'Transfer', 'QRIS'][rand(0, 2)],
-                    'status'            => 'selesai',
-                    'created_at'        => $waktuSpesifik,
-                    'updated_at'        => $waktuSpesifik,
-                ]);
-
-                $subtotalInvoice = 0;
-                $itemsNotaIni = [];
-
-                // Ambil barang Fast-Moving acak
-                $kodeFastUji = $fastMovingKodes[array_rand($fastMovingKodes)];
-                $itemsNotaIni[] = ['barang' => $barangInstances[$kodeFastUji], 'qty' => rand(1, 2)];
-
-                if (rand(0, 1) === 1) {
-                    $kodeSlowUji = $slowMovingKodes[array_rand($slowMovingKodes)];
-                    $itemsNotaIni[] = ['barang' => $barangInstances[$kodeSlowUji], 'qty' => 1];
-                }
-
-                foreach ($itemsNotaIni as $item) {
-                    $barang = $item['barang'];
-                    $qtyJual = $item['qty'];
-
-                    // KUNCI AMAN: Cek apakah stok mencukupi. Jika sisa stok lebih kecil dari kuantitas jual, pangkas penjualan senilai sisa stok yang ada
-                    if ($barang->stok < $qtyJual) {
-                        $qtyJual = $barang->stok;
-                    }
-
-                    // Jika stok benar-benar 0 (Habis), batalkan memasukkan barang ke detail nota
-                    if ($qtyJual <= 0) {
-                        continue;
-                    }
-
-                    $subtotalItem = $barang->harga_jual * $qtyJual;
-
-                    DetailTransaksi::create([
-                        'transaksi_id'      => $transaksi->id,
-                        'barang_id'         => $barang->id,
-                        'nama_barang_manual'=> null,
-                        'harga_modal'       => $barang->harga_beli,
-                        'harga_jual_satuan' => $barang->harga_jual,
-                        'jumlah'            => $qtyJual,
-                        'subtotal'          => $subtotalItem,
-                        'created_at'        => $waktuSpesifik,
-                        'updated_at'        => $waktuSpesifik,
-                    ]);
-
-                    // Potong kuantitas fisik (Aman, tidak akan pernah bernilai minus lagi)
-                    $barang->decrement('stok', $qtyJual);
-
-                    DB::table('histori_stok')->insert([
-                        'barang_id'         => $barang->id,
-                        'jenis_pergerakan'  => 'keluar',
-                        'jumlah'            => $qtyJual,
-                        'sisa_stok_saat_ini'=> $barang->stok,
-                        'keterangan'        => 'Penjualan Selesai Nota ' . $noInvoice,
-                        'created_at'        => $waktuSpesifik,
-                        'updated_at'        => $waktuSpesifik,
-                    ]);
-
-                    $subtotalInvoice += $subtotalItem;
-                }
-
-                $totalAkhirInvoice = $subtotalInvoice + $transaksi->biaya_jasa_servis;
-                $transaksi->update(['total_harga' => $totalAkhirInvoice]);
+        DB::beginTransaction();
+        try {
+            $barangInstances = [];
+            foreach ($masterBarang as $mb) {
+                $barangInstances[$mb['kode_barang']] = Barang::create($mb);
             }
-        }
 
-        DB::commit();
+            $fastMovingKodes = ['OLI001', 'OLI002', 'OLI003', 'BSI001', 'BKT001', 'BKT002'];
+            $slowMovingKodes = ['BAN001', 'BAN002', 'AKI001', 'AKI002', 'VBL001', 'VBL002', 'RLR001', 'FLT001', 'FLT002', 'LMP001', 'RNT001', 'SKR001', 'CBL001', 'CBL002'];
+
+            // 4. GENERATE TEPAT 5 TRANSAKSI SEHARI SELAMA 7 HARI (35 NOTA REAL)
+            for ($hari = 6; $hari >= 0; $hari--) {
+                $tanggalTransaksi = Carbon::now()->subDays($hari);
+
+                for ($inv = 1; $inv <= 5; $inv++) {
+                    $waktuSpesifik = clone $tanggalTransaksi;
+                    $waktuSpesifik->setTime(rand(8, 16), rand(10, 59));
+
+                    $noInvoice = 'INV-' . $waktuSpesifik->format('ymd') . str_pad($inv, 3, '0', STR_PAD_LEFT);
+                    
+                    // Inisialisasi awal transaksi
+                    $transaksi = Transaksi::create([
+                        'no_invoice'        => $noInvoice,
+                        'user_id'           => $kasir->id,
+                        'jenis_motor'       => ['Beat FI', 'Vario 125', 'Scoopy ESP', 'Mio M3', 'Supra X 125'][rand(0, 4)],
+                        'biaya_jasa_servis' => [0, 25000, 35000][rand(0, 2)],
+                        'total_harga'       => 0,
+                        'metode_pembayaran' => ['Tunai', 'Transfer', 'QRIS'][rand(0, 2)],
+                        'status'            => 'selesai',
+                        'bayar'             => 0,
+                        'kembalian'         => 0,
+                        'created_at'        => $waktuSpesifik,
+                        'updated_at'        => $waktuSpesifik,
+                    ]);
+
+                    $subtotalInvoice = 0;
+                    $itemsNotaIni = [];
+
+                    // Tambah barang Fast-Moving (Menjamin nota tidak Rp 0)
+                    $kodeFastUji = $fastMovingKodes[array_rand($fastMovingKodes)];
+                    $itemsNotaIni[] = ['barang' => $barangInstances[$kodeFastUji], 'qty' => rand(1, 2)];
+
+                    // Tambah barang Slow-Moving opsional
+                    if (rand(0, 1) === 1) {
+                        $kodeSlowUji = $slowMovingKodes[array_rand($slowMovingKodes)];
+                        $itemsNotaIni[] = ['barang' => $barangInstances[$kodeSlowUji], 'qty' => 1];
+                    }
+
+                    foreach ($itemsNotaIni as $item) {
+                        $barang = $item['barang'];
+                        $qtyJual = $item['qty'];
+
+                        // PROTEKSI STOK MINUS: Jika stok di database kurang dari kuantitas beli, batasi penjualan
+                        if ($barang->stok < $qtyJual) {
+                            $qtyJual = $barang->stok;
+                        }
+
+                        if ($qtyJual <= 0) {
+                            continue;
+                        }
+
+                        $subtotalItem = $barang->harga_jual * $qtyJual;
+
+                        DetailTransaksi::create([
+                            'transaksi_id'      => $transaksi->id,
+                            'barang_id'         => $barang->id,
+                            'nama_barang_manual'=> null,
+                            'harga_modal'       => $barang->harga_beli,
+                            'harga_jual_satuan' => $barang->harga_jual,
+                            'jumlah'            => $qtyJual,
+                            'subtotal'          => $subtotalItem,
+                            'created_at'        => $waktuSpesifik,
+                            'updated_at'        => $waktuSpesifik,
+                        ]);
+
+                        // Potong stok fisik aman
+                        $barang->decrement('stok', $qtyJual);
+
+                        DB::table('histori_stok')->insert([
+                            'barang_id'         => $barang->id,
+                            'jenis_pergerakan'  => 'keluar',
+                            'jumlah'            => $qtyJual,
+                            'sisa_stok_saat_ini'=> $barang->stok,
+                            'keterangan'        => 'Penjualan Selesai Nota ' . $noInvoice,
+                            'created_at'        => $waktuSpesifik,
+                            'updated_at'        => $waktuSpesifik,
+                        ]);
+
+                        $subtotalInvoice += $subtotalItem;
+                    }
+
+                    $totalAkhirInvoice = $subtotalInvoice + $transaksi->biaya_jasa_servis;
+                    
+                    // MENGHITUNG KOLOM BARU: SIMULASI BAYAR & KEMBALIAN KASIR SECARA REALISTIS
+                    $bayar = $totalAkhirInvoice;
+                    $kembalian = 0;
+
+                    if ($transaksi->metode_pembayaran === 'Tunai') {
+                        // Pecahan uang tunai pas atau lebih besar terdekat (Kelipatan Rp 10.000 atau Rp 50.000)
+                        if ($totalAkhirInvoice % 50000 !== 0) {
+                            $bayar = (ceil($totalAkhirInvoice / 50000) * 50000);
+                        }
+                        $kembalian = $bayar - $totalAkhirInvoice;
+                    }
+
+                    // Update data tagihan invoice akhir secara utuh
+                    $transaksi->update([
+                        'total_harga' => $totalAkhirInvoice,
+                        'bayar'       => $bayar,
+                        'kembalian'   => $kembalian
+                    ]);
+                }
+            }
+
+            DB::commit();
+            $this->command->info("===============================================================");
+            $this->command->info(" SEEDER SELESAI: Kolom bayar & kembalian terisi realistis!");
+            $this->command->info(" Sisa stok aman tertahan di angka 0 jika habis.");
+            $this->command->info("===============================================================");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->command->error("Gagal Eksekusi Seeder: " . $e->getMessage());
+        }
     }
 }

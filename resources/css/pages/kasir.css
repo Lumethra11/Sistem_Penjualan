@@ -8,11 +8,11 @@
     --ks-border: #E2E8F0;
     --ks-card: #FFFFFF;
     
-    --ks-primary: #1E3A8A;      /* Biru Gelap (Tombol Simpan / Aktif) */
-    --ks-primary-light: #2563EB; /* Biru Terang (Tombol Tambah) */
-    --ks-success: #22C55E;       /* Hijau (Cetak) */
-    --ks-danger: #EF4444;        /* Merah (Clear / Hapus) */
-    --ks-warning: #FEF08A;       /* Kuning (Badge Draft) */
+    --ks-primary: #1E3A8A;      /* Biru Gelap */
+    --ks-primary-light: #2563EB; /* Biru Terang */
+    --ks-success: #22C55E;       /* Hijau */
+    --ks-danger: #EF4444;        /* Merah */
+    --ks-warning: #FEF08A;       /* Kuning */
     --ks-warning-text: #854D0E;
 }
 
@@ -70,7 +70,7 @@
 }
 
 /* =========================================================
-   LAYOUT DINAMIS (TRANSISI PANEL)
+   LAYOUT DINAMIS
 ========================================================= */
 .kasir-layout {
     display: flex;
@@ -79,9 +79,8 @@
     min-height: 75vh;
 }
 
-/* Container Kiri (Draft) */
 .draft-container {
-    flex: 1; /* Default mengambil lebar penuh */
+    flex: 1;
     transition: all 0.3s ease;
 }
 
@@ -98,7 +97,6 @@
     margin: 0;
 }
 
-/* Tombol Plus (+) di pojok kanan Draft Transaksi */
 .add-draft-btn {
     width: 40px;
     height: 40px;
@@ -112,7 +110,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.2s;
     box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);
 }
 
@@ -120,22 +118,64 @@
     background: var(--ks-primary-light);
 }
 
-/* Grid Kartu Draft saat Layar Penuh */
+/* PERBAIKAN: Efek style tombol panah waktu panel sedang terbuka */
+.add-draft-btn.btn-close-state {
+    background: #64748B;
+    font-size: 16px;
+}
+.add-draft-btn.btn-close-state:hover {
+    background: var(--ks-danger);
+}
+
+.draft-list-container {
+    width: 100%;
+}
+
 .draft-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 16px;
 }
 
-/* --- KONDISI SAAT PANEL KANAN TERBUKA --- */
 .kasir-layout.panel-open .draft-container {
-    width: 320px; /* Menyusut menjadi sidebar */
+    width: 320px;
     flex: none;
 }
 
 .kasir-layout.panel-open .draft-list {
     display: flex;
-    flex-direction: column; /* Kartu menjadi ke bawah */
+    flex-direction: column;
+}
+
+/* =========================================================
+   PERBAIKAN: STYLING DRAFT EMPTY CONTAINER
+========================================================= */
+.draft-empty-box {
+    background: var(--ks-card);
+    border: 2px dashed #CBD5E1;
+    border-radius: 14px;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--ks-text-muted);
+}
+
+.draft-empty-box .empty-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+    opacity: 0.7;
+}
+
+.draft-empty-box h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ks-text);
+    margin: 0 0 6px 0;
+}
+
+.draft-empty-box p {
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
 }
 
 /* =========================================================
@@ -199,10 +239,10 @@
 }
 
 /* =========================================================
-   TRANSACTION PANEL (RIGHT SIDE)
+   TRANSACTION PANEL
 ========================================================= */
 .transaction-panel {
-    display: none; /* Disembunyikan secara default */
+    display: none;
     flex: 1;
     background: var(--ks-card);
     border-radius: 16px;
@@ -274,7 +314,7 @@ input:focus, select:focus {
 }
 
 /* =========================================================
-   BUTTONS (DIDALAM PANEL & UMUM)
+   BUTTONS
 ========================================================= */
 .btn-blue, .btn-dark-blue, .btn-green, .btn-red {
     height: 44px;
@@ -297,7 +337,6 @@ input:focus, select:focus {
 .btn-green { background: var(--ks-success); }
 .btn-red { background: var(--ks-danger); }
 
-/* Tombol hapus di tabel (X) */
 .btn-del {
     background: #FEE2E2;
     color: var(--ks-danger);
@@ -315,7 +354,6 @@ input:focus, select:focus {
     color: #fff;
 }
 
-/* Tombol Cetak Nota di History */
 .btn-print-nota {
     background: #E0F2FE;
     color: #0284C7;
@@ -429,7 +467,7 @@ input:focus, select:focus {
 }
 
 /* =========================================================
-   ACTION BUTTONS (BOTTOM)
+   ACTION BUTTONS
 ========================================================= */
 .action-buttons {
     display: flex;
@@ -444,7 +482,7 @@ input:focus, select:focus {
 }
 
 /* =========================================================
-   HISTORY TABLE (Tampilan Gambar 3)
+   HISTORY TABLE
 ========================================================= */
 .table-container {
     background: var(--ks-card);
@@ -531,4 +569,88 @@ input:focus, select:focus {
     .right-actions button, .action-buttons > button {
         width: 100%;
     }
+}
+
+/* =========================================================
+   PAGINATION CUSTOM FIX (Menghapus Kekacauan Tailwind)
+========================================================= */
+.pagination-wrapper nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.pagination-wrapper nav > div:first-child {
+    display: none !important;
+}
+
+.pagination-wrapper nav > div:last-child {
+    display: flex !important;
+    align-items: center;
+    gap: 16px;
+    flex-direction: row-reverse;
+}
+
+.pagination-wrapper nav p {
+    font-size: 14px;
+    color: var(--ks-text-muted);
+    margin: 0;
+}
+
+.pagination-wrapper nav span.relative.z-0, 
+.pagination-wrapper nav .inline-flex {
+    display: flex !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+    border: 1px solid var(--ks-border) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-wrapper nav a, 
+.pagination-wrapper nav span[aria-current="page"] > span,
+.pagination-wrapper nav span.relative.inline-flex.items-center {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    padding: 0 12px !important;
+    background-color: #ffffff !important;
+    border: none !important;
+    border-right: 1px solid var(--ks-border) !important;
+    color: var(--ks-text) !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.pagination-wrapper nav a:last-child,
+.pagination-wrapper nav span:last-child {
+    border-right: none !important;
+}
+
+.pagination-wrapper nav a:hover {
+    background-color: #F1F5F9 !important;
+    color: var(--ks-primary-light) !important;
+}
+
+.pagination-wrapper nav span[aria-current="page"] > span {
+    background-color: var(--ks-primary) !important;
+    color: #ffffff !important;
+    cursor: default;
+}
+
+.pagination-wrapper nav span.relative.inline-flex.items-center {
+    color: #CBD5E1 !important;
+    background-color: #F8FAFC !important;
+    cursor: not-allowed;
+}
+
+.pagination-wrapper nav svg {
+    width: 16px !important;
+    height: 16px !important;
+    display: inline-block !important;
+    vertical-align: middle;
 }

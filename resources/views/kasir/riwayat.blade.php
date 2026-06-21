@@ -1,13 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-
 @vite('resources/css/pages/kasir.css')
 
-{{-- Jika user baru saja mengklik "Cetak" di Kasir, maka trigger Pop-Up Struk Otomatis --}}
 @if(session('cetak_nota'))
 <script>
-    // Membuka nota di tab baru
     window.open("{{ route('kasir.nota', session('cetak_nota')) }}", "_blank");
 </script>
 @endif
@@ -43,7 +40,6 @@
                     <td>{{ $item->metode_pembayaran }}</td>
                     <td>Rp. {{ number_format($item->total_harga, 0, ',', '.') }}</td>
                     <td>
-                        {{-- Tombol untuk download/print nota ulang --}}
                         <a href="{{ route('kasir.nota', $item->id) }}" target="_blank" class="btn-print-nota">
                             Cetak Nota
                         </a>
@@ -53,10 +49,10 @@
             </tbody>
         </table>
 
+        {{-- CONTAINER PAGINATION UTAMA --}}
         <div class="pagination-wrapper">
             {{ $riwayat->links() }}
         </div>
     </div>
 </div>
-
 @endsection
