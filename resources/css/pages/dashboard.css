@@ -1,5 +1,5 @@
 /* =========================================================
-   ROOT VARIABLES (SINKRON 100% DENGAN MANAJEMEN BARANG)
+   ROOT VARIABLES DASHBOARD INDEPENDEN
 ========================================================= */
 :root {
     --mb-primary: #2F5BD3;
@@ -74,9 +74,7 @@
     transition: 0.2s;
 }
 
-.db-metric-card.clickable {
-    cursor: pointer;
-}
+.db-metric-card.clickable { cursor: pointer; }
 .db-metric-card.clickable:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 24px rgba(47,91,211,0.12);
@@ -105,11 +103,7 @@
     justify-content: center;
     flex-shrink: 0;
 }
-.card-icon-block svg {
-    width: 20px;
-    height: 20px;
-    color: #ffffff;
-}
+.card-icon-block svg { width: 20px; height: 20px; color: #ffffff; }
 
 .c-blue { background: var(--mb-primary); }
 .c-green { background: var(--mb-success); }
@@ -121,7 +115,7 @@
 ========================================================= */
 .lower-content-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1.6fr 1.4fr; /* Lebar ranking diperbesar sedikit agar nama sparepart lapang */
     gap: 20px;
     align-items: start;
     margin-bottom: 32px;
@@ -131,133 +125,219 @@
     background: var(--mb-card);
     border-radius: 12px;
     padding: 32px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
     border: 1px solid var(--mb-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-.chart-container-box h2, .ranking-container-box h2 {
+.chart-container-box h2 {
     font-size: 16px;
     font-weight: 700;
     color: var(--mb-text);
     margin: 0 0 24px 0;
 }
 
+.canvas-chart-holder {
+    position: relative; 
+    width: 100%; 
+    height: 320px;
+}
+
 /* =========================================================
-   MODAL OVERLAY (FIXED POP-UP MELAYANG)
+   RANKING INTERFACE LIST 
 ========================================================= */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    opacity: 0;
-    visibility: hidden;
-    transition: 0.3s ease;
-}
-
-.modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.modal-content {
-    background: #fff;
-    border-radius: 16px;
-    width: 100%;
-    padding: 32px;
-    transform: scale(0.95) translateY(20px);
-    transition: 0.3s ease;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    position: relative;
-    box-sizing: border-box;
-}
-.modal-overlay.active .modal-content {
-    transform: scale(1) translateY(0);
-}
-
-.modal-header {
+.ranking-header-inline {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
 }
-.modal-header h2 {
-    font-size: 20px;
+.ranking-header-inline h2 {
+    font-size: 16px;
     font-weight: 700;
     color: var(--mb-text);
     margin: 0;
 }
 
-.close-modal-btn {
-    background: transparent;
-    border: none;
-    font-size: 26px;
-    color: #94A3B8;
-    cursor: pointer;
-    line-height: 1;
-    transition: 0.2s;
-}
-.close-modal-btn:hover { color: var(--mb-danger); }
-
-.modal-table-holder {
-    max-height: 260px;
+.ranking-scroll-list-holder {
+    max-height: 320px;
     overflow-y: auto;
-    margin-top: 12px;
-    border: 1px solid var(--mb-border);
-    border-radius: 8px;
-}
-
-table { width: 100%; border-collapse: collapse; }
-table thead tr { border-bottom: 1px solid var(--mb-border); }
-table th {
-    text-align: left; padding: 12px 16px; font-size: 13px;
-    font-weight: 600; color: #64748B; background: #F8FAFC;
-}
-table td {
-    padding: 14px 16px; border-bottom: 1px solid #F1F5F9;
-    font-size: 13.5px; color: #334155; vertical-align: middle;
-}
-table tr:last-child td { border-bottom: none; }
-
-.modal-summary-strip {
     display: flex;
-    gap: 16px;
-    margin-bottom: 20px;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 4px;
 }
-.summary-badge {
-    flex: 1;
+
+.ranking-item-card {
+    display: flex;
+    align-items: center;
     background: #F8FAFC;
     border: 1px solid var(--mb-border);
-    padding: 14px 18px;
-    border-radius: 8px;
-}
-.summary-badge small {
-    font-size: 11px;
-    font-weight: 600;
-    color: #64748B;
-    display: block;
-    margin-bottom: 4px;
-}
-.summary-badge span {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--mb-text);
+    padding: 12px 16px;
+    border-radius: 10px;
+    transition: all 0.2s;
 }
 
-.table-title-divider {
-    font-size: 14px;
+.ranking-container-box.clickable-panel {
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.ranking-container-box.clickable-panel:hover {
+    transform: translateY(-2px);
+    border-color: var(--mb-primary);
+    box-shadow: 0 8px 24px rgba(47, 91, 211, 0.08);
+}
+.view-all-link-badge {
+    font-size: 12px;
     font-weight: 700;
     color: var(--mb-primary);
-    margin: 20px 0 8px 0;
+    background: #EFF6FF;
+    padding: 4px 10px;
+    border-radius: 6px;
 }
 
+.ranking-number-badge {
+    width: 28px;
+    height: 28px;
+    background: #E2E8F0;
+    color: #475569;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 14px;
+}
+
+.ranking-item-meta { flex: 1; text-align: left; }
+.ranking-item-meta h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--mb-text);
+    margin: 0 0 3px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+.ranking-item-meta small { font-size: 11.5px; color: #64748B; }
+
+.ranking-item-metric { text-align: right; }
+.ranking-item-metric p { font-size: 13px; font-weight: 700; color: var(--mb-text); margin: 4px 0 0 0; }
+
+/* K-MEANS OPERATIONAL BENGKEL BADGES (SINKRON SLUG STR) */
+.badge-cluster {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-block;
+}
+.badge-cluster.sangat-laku { background: #DCFCE7; color: var(--mb-success); }
+.badge-cluster.laku-normal { background: #FEF9C3; color: #D97706; }
+.badge-cluster.kurang-laku { background: #FEE2E2; color: var(--mb-danger); }
+
+.empty-kmeans-box { text-align: center; color: #94A3B8; padding: 60px 0; font-size: 13px; }
+
+/* =========================================================
+   DETAIL CLUSTERING FILTER & NAVIGATION STYLE
+========================================================= */
+.back-nav-title-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.btn-back-dashboard {
+    height: 36px;
+    padding: 0 14px;
+    background: #F1F5F9;
+    color: #475569;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+.btn-back-dashboard:hover { background: #E2E8F0; color: #1E293B; }
+
+.filter-detail-grid-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    text-align: left;
+}
+.detail-filter-group {
+    display: flex;
+    flex-direction: column;
+}
+.detail-filter-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748B;
+    margin-bottom: 6px;
+}
+.detail-filter-group select {
+    height: 38px;
+    border: 1px solid var(--mb-border);
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--mb-text);
+    outline: none;
+    background: #FFFFFF;
+}
+
+/* =========================================================
+   MODALS LAYOUT STYLINGS
+========================================================= */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s ease;
+}
+.modal-overlay.active { opacity: 1; visibility: visible; }
+
+.modal-content {
+    background: #fff; border-radius: 16px; width: 100%; max-width: 750px;
+    padding: 32px; transform: scale(0.95) translateY(20px); transition: 0.3s ease;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); position: relative; box-sizing: border-box;
+}
+.modal-content.max-width-pengeluaran { max-width: 650px; }
+.modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.modal-header h2 { font-size: 20px; font-weight: 700; color: var(--mb-text); margin: 0; }
+
+.close-modal-btn { background: transparent; border: none; font-size: 26px; color: #94A3B8; cursor: pointer; line-height: 1; transition: 0.2s; }
+.close-modal-btn:hover { color: var(--mb-danger); }
+
+.modal-summary-strip { display: flex; gap: 16px; margin-bottom: 20px; }
+.summary-badge { flex: 1; background: #F8FAFC; border: 1px solid var(--mb-border); padding: 14px 18px; border-radius: 8px; }
+.summary-badge small { font-size: 11px; font-weight: 600; color: #64748B; display: block; margin-bottom: 4px; }
+.summary-badge span { font-size: 16px; font-weight: 700; color: var(--mb-text); }
+
+.table-title-divider { font-size: 14px; font-weight: 700; color: var(--mb-primary); margin: 20px 0 8px 0; text-align: left;}
+.modal-table-holder { max-height: 220px; overflow-y: auto; margin-top: 12px; border: 1px solid var(--mb-border); border-radius: 8px; }
+.modal-table-holder.margin-top-zero { margin-top: 0; }
+
+table { width: 100%; border-collapse: collapse; text-align: left; }
+table thead tr { border-bottom: 1px solid var(--mb-border); position: sticky; top: 0; z-index: 10; }
+table th { padding: 12px 16px; font-size: 13px; font-weight: 600; color: #64748B; background: #F8FAFC; }
+table td { padding: 14px 16px; border-bottom: 1px solid #F1F5F9; font-size: 13.5px; color: #334155; vertical-align: middle; }
+
+.bold-row-item-title { font-weight: 600; color: #0F172A; }
+.profit-text-green { color: var(--mb-success); font-weight: 600; }
+.loss-text-red { color: var(--mb-danger); font-weight: 600; }
+.text-center-empty { text-align: center; color: #64748B; }
+
+/* =========================================================
+   MEDIA QUERY RESPONSIVE SYSTEM
+========================================================= */
 @media (max-width: 1150px) {
     .dashboard-cards-grid { grid-template-columns: repeat(2, 1fr); }
     .lower-content-grid { grid-template-columns: 1fr; }

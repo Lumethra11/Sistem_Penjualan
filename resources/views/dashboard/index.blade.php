@@ -17,11 +17,11 @@
         </form>
     </div>
 
+    {{-- METRIC CARDS GRID --}}
     <div class="dashboard-cards-grid">
-        
         <div class="db-metric-card">
             <div class="card-text-block">
-                <h3>Total Barang</h3>
+                <h3>Total Ragam Barang</h3>
                 <p>{{ number_format($totalBarang, 0, ',', '.') }}</p>
             </div>
             <div class="card-icon-block c-blue">
@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <div class="db-metric-card clickable" onclick="openModalBox('pemasukanModal')" title="Klik untuk rincian pemasukan">
+        <div class="db-metric-card clickable" onclick="openModalBox('pemasukanModal')">
             <div class="card-text-block">
                 <h3>Pemasukan</h3>
                 <p>Rp. {{ number_format($pemasukan, 0, ',', '.') }}</p>
@@ -39,9 +39,9 @@
             </div>
         </div>
 
-        <div class="db-metric-card clickable" onclick="openModalBox('pengeluaranModal')" title="Klik untuk rincian pengeluaran">
+        <div class="db-metric-card clickable" onclick="openModalBox('pengeluaranModal')">
             <div class="card-text-block">
-                <h3>Pengeluaran</h3>
+                <h3>Pengeluaran (Modal)</h3>
                 <p>Rp. {{ number_format($pengeluaran, 0, ',', '.') }}</p>
             </div>
             <div class="card-icon-block c-orange">
@@ -51,36 +51,56 @@
 
         <div class="db-metric-card">
             <div class="card-text-block">
-                <h3>Stok Rendah</h3>
+                <h3>Stok Hampir Habis</h3>
                 <p>{{ number_format($stokRendah, 0, ',', '.') }}</p>
             </div>
             <div class="card-icon-block c-red">
                 <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             </div>
         </div>
-
     </div>
 
     <div class="lower-content-grid">
+        {{-- GRAFIK KEUANGAN --}}
         <div class="chart-container-box">
             <h2>Grafik Aktivitas Keuangan Bisnis</h2>
-            <div style="position: relative; width: 100%; height: 320px;">
+            <div class="canvas-chart-holder">
                 <canvas id="mainFinanceChart"></canvas>
             </div>
         </div>
 
-        <div class="ranking-container-box">
-            <h2>Analisis K-Means</h2>
-            <div style="text-align: center; color: #94A3B8; padding: 50px 0; font-size: 13px;">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 10px; display: block; color: #cbd5e1;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"></path></svg>
-                Menunggu klasterisasi algoritma...
+        {{-- RANKING PANEL PREVIEW (BAHASA USER BENGKEL) --}}
+        <div class="ranking-container-box clickable-panel" onclick="window.location.href='{{ route('dashboard.clustering_detail') }}'" title="Klik untuk membuka rekap riwayat berfilter lengkap">
+            <div class="ranking-header-inline">
+                <h2>Peringkat Perputaran Barang (Minggu Ini)</h2>
+                <span class="view-all-link-badge">Detail Riwayat <i class="fa-solid fa-arrow-right"></i></span>
+            </div>
+
+            <div class="ranking-scroll-list-holder">
+                @forelse($barangTerlaris as $index => $bt)
+                    <div class="ranking-item-card">
+                        <div class="ranking-number-badge">{{ $index + 1 }}</div>
+                        <div class="ranking-item-meta">
+                            <h4>{{ $bt['nama'] }}</h4>
+                            <small>Kode: {{ $bt['kode'] }} | Sisa Stok: {{ $bt['stok'] }}</small>
+                        </div>
+                        <div class="ranking-item-metric">
+                            {{-- Class CSS dinamis diubah menggunakan fungsi Str::slug pembentuk teks operasional --}}
+                            <span class="badge-cluster {{ Str::slug($bt['label']) }}">{{ $bt['label'] }}</span>
+                            <p>{{ $bt['terjual'] }} Terjual</p>
+                        </div>
+                    </div>
+                @empty
+                    <div class="empty-kmeans-box">Tidak ada rekaman transaksi penjualan barang pada minggu ini.</div>
+                @endforelse
             </div>
         </div>
     </div>
 </div>
 
+{{-- MODAL BOX DETAILS PEMASUKAN --}}
 <div class="modal-overlay" id="pemasukanModal">
-    <div class="modal-content" style="max-width: 750px;">
+    <div class="modal-content">
         <div class="modal-header">
             <h2>Rincian Pendapatan Komprehensif</h2>
             <button class="close-modal-btn" onclick="closeModalBox('pemasukanModal')">&times;</button>
@@ -112,36 +132,14 @@
                 <tbody>
                     @forelse($detailBarangPemasukan as $b)
                         <tr>
-                            <td style="font-weight: 600;">{{ $b->nama }}</td>
+                            <td class="bold-row-item-title">{{ $b->nama }}</td>
                             <td>{{ $b->total_qty }}</td>
                             <td>Rp. {{ number_format($b->harga_beli_satuan, 0, ',', '.') }}</td>
-                            <td>Rp. {{ number_format($b->total_jual / $b->total_qty, 0, ',', '.') }}</td>
-                            <td style="color: var(--mb-success); font-weight: 600;">Rp. {{ number_format($b->keuntungan, 0, ',', '.') }}</td>
+                            <td>Rp. {{ number_format($b->total_qty > 0 ? ($b->total_jual / $b->total_qty) : 0, 0, ',', '.') }}</td>
+                            <td class="profit-text-green">Rp. {{ number_format($b->keuntungan, 0, ',', '.') }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" style="text-align: center; color: #64748B;">Tidak ada transaksi produk.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <div class="table-title-divider" style="margin-top: 24px;">Daftar Layanan Jasa Servis</div>
-        <div class="modal-table-holder">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Deskripsi Unit Kendaraan</th>
-                        <th>Nominal Biaya Jasa</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($detailJasaPemasukan as $j)
-                        <tr>
-                            <td>Layanan Servis Unit Motor {{ $j->jenis_motor ?? 'Umum' }}</td>
-                            <td style="font-weight: 600; color: var(--mb-text);">Rp. {{ number_format($j->nominal, 0, ',', '.') }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="2" style="text-align: center; color: #64748B;">Tidak ada transaksi layanan jasa.</td></tr>
+                        <tr><td colspan="5" class="text-center-empty">Tidak ada transaksi produk.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -149,14 +147,14 @@
     </div>
 </div>
 
+{{-- MODAL PENGELUARAN --}}
 <div class="modal-overlay" id="pengeluaranModal">
-    <div class="modal-content" style="max-width: 650px;">
+    <div class="modal-content max-width-pengeluaran">
         <div class="modal-header">
             <h2>Rincian Pengeluaran Modal Produk</h2>
             <button class="close-modal-btn" onclick="closeModalBox('pengeluaranModal')">&times;</button>
         </div>
-
-        <div class="modal-table-holder" style="margin-top: 0;">
+        <div class="modal-table-holder margin-top-zero">
             <table>
                 <thead>
                     <tr>
@@ -169,13 +167,13 @@
                 <tbody>
                     @forelse($detailBarangPemasukan as $p)
                         <tr>
-                            <td style="font-weight: 600;">{{ $p->nama }}</td>
+                            <td class="bold-row-item-title">{{ $p->nama }}</td>
                             <td>Rp. {{ number_format($p->harga_beli_satuan, 0, ',', '.') }}</td>
                             <td>{{ $p->total_qty }}</td>
-                            <td style="color: var(--mb-danger); font-weight: 600;">Rp. {{ number_format($p->total_modal, 0, ',', '.') }}</td>
+                            <td class="loss-text-red">Rp. {{ number_format($p->total_modal, 0, ',', '.') }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" style="text-align: center; color: #64748B;">Tidak ada beban modal pengeluaran.</td></tr>
+                        <tr><td colspan="4" class="text-center-empty">Tidak ada beban modal pengeluaran.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -194,7 +192,6 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                // FIXED LUAR BIASA: Label Sumbu X dicetak dinamis menyesuaikan data dari PHP Controller
                 labels: @json($chartLabels),
                 datasets: [
                     {

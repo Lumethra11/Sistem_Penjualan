@@ -34,6 +34,10 @@ Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Detail Clustering Berfilter
+    Route::get('/dashboard/clustering-detail', [DashboardController::class, 'clusteringDetail'])
+        ->name('dashboard.clustering_detail');
+
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])
         ->name('logout');
