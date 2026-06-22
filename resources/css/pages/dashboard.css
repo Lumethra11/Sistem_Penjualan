@@ -1,5 +1,5 @@
 /* =========================================================
-   ROOT VARIABLES DASHBOARD INDEPENDEN
+    ROOT VARIABLES DASHBOARD INDEPENDEN
 ========================================================= */
 :root {
     --mb-primary: #2F5BD3;
@@ -53,7 +53,7 @@
 }
 
 /* =========================================================
-   GRID METRIC CARDS
+    GRID METRIC CARDS
 ========================================================= */
 .dashboard-cards-grid {
     display: grid;
@@ -111,7 +111,7 @@
 .c-red { background: var(--mb-danger); }
 
 /* =========================================================
-   LOWER WORKSPACE GRID
+    LOWER WORKSPACE GRID
 ========================================================= */
 .lower-content-grid {
     display: grid;
@@ -143,7 +143,7 @@
 }
 
 /* =========================================================
-   RANKING INTERFACE LIST 
+    RANKING INTERFACE LIST 
 ========================================================= */
 .ranking-header-inline {
     display: flex;
@@ -226,7 +226,7 @@
 .ranking-item-metric p { font-size: 13px; font-weight: 700; color: var(--mb-text); margin: 4px 0 0 0; }
 
 /* =========================================================
-   K-MEANS ACADEMIC CLUSTER BADGES (SINKRON SLUG STR)
+    K-MEANS ACADEMIC CLUSTER BADGES (SINKRON SLUG STR)
 ========================================================= */
 .badge-cluster {
     font-size: 11px;
@@ -236,7 +236,6 @@
     display: inline-block;
     text-align: center;
 }
-/* Menyesuaikan dengan slug teks 'Laris', 'Sedang', 'Kurang Laris' */
 .badge-cluster.laris { background: #DCFCE7; color: #15803D; }
 .badge-cluster.sedang { background: #FEF9C3; color: #B45309; }
 .badge-cluster.kurang-laris { background: #FEE2E2; color: #B91C1C; }
@@ -244,7 +243,7 @@
 .empty-kmeans-box { text-align: center; color: #94A3B8; padding: 60px 0; font-size: 13px; }
 
 /* =========================================================
-   DETAIL CLUSTERING FILTER & NAVIGATION STYLE
+    DETAIL CLUSTERING FILTER & NAVIGATION STYLE
 ========================================================= */
 .back-nav-title-group {
     display: flex;
@@ -296,7 +295,7 @@
 }
 
 /* =========================================================
-   MODALS LAYOUT STYLINGS
+    MODALS LAYOUT STYLINGS
 ========================================================= */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -340,7 +339,7 @@ table td { padding: 14px 16px; border-bottom: 1px solid #F1F5F9; font-size: 13.5
 .text-center-empty { text-align: center; color: #64748B; }
 
 /* =========================================================
-   MEDIA QUERY RESPONSIVE SYSTEM
+    MEDIA QUERY RESPONSIVE SYSTEM
 ========================================================= */
 @media (max-width: 1150px) {
     .dashboard-cards-grid { grid-template-columns: repeat(2, 1fr); }

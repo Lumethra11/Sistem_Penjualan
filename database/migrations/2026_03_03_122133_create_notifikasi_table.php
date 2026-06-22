@@ -10,9 +10,12 @@ return new class extends Migration
     {
         Schema::create('notifikasi', function (Blueprint $table) {
             $table->id();
-            $table->string('judul'); // Misal: "Peringatan Stok Tipis!" atau "Rekomendasi Restock"
+            $table->string('id_item')->unique();
+            $table->string('tipe');
+            $table->string('icon');
+            $table->string('judul');
             $table->text('pesan');
-            $table->boolean('is_read')->default(false); // Status sudah dibaca atau belum
+            $table->boolean('is_read')->default(false);
             $table->timestamps();
         });
     }

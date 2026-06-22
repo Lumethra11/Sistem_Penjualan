@@ -72,7 +72,7 @@
         {{-- RANKING PANEL PREVIEW --}}
         <div class="ranking-container-box clickable-panel" onclick="window.location.href='{{ route('dashboard.clustering_detail') }}'" title="Klik untuk membuka riwayat analisis perputaran lengkap">
             <div class="ranking-header-inline">
-                <h2>Analisis Perputaran Barang (Minggu Ini)</h2>
+                <h2>Ranking Penjualan Teratas (Minggu Ini)</h2>
                 <span class="view-all-link-badge">Detail Riwayat <i class="fa-solid fa-arrow-right"></i></span>
             </div>
 

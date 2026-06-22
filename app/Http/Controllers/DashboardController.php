@@ -22,6 +22,9 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
+        Carbon::setLocale('id');
+        date_default_timezone_set('Asia/Jakarta');
+
         $filter = $request->query('filter', 'hari');
         $now = Carbon::now();
 
@@ -38,8 +41,8 @@ class DashboardController extends Controller
             $queryPemasukan->whereDate('created_at', Carbon::today());
             $queryPengeluaran->whereDate('created_at', Carbon::today());
         } elseif ($filter === 'minggu') {
-            $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
-            $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY);
+            $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->startOfDay();
+            $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY)->endOfDay();
             $queryPemasukan->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
             $queryPengeluaran->whereHas('transaksi', function ($q) use ($startOfWeek, $endOfWeek) {
                 $q->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
@@ -77,8 +80,8 @@ class DashboardController extends Controller
         } elseif ($filter === 'minggu') {
             $chartLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
             $mapDays = [2, 3, 4, 5, 6, 7, 1];
-            $startW = Carbon::now()->startOfWeek(Carbon::MONDAY);
-            $endW = Carbon::now()->endOfWeek(Carbon::SUNDAY);
+            $startW = Carbon::now()->startOfWeek(Carbon::MONDAY)->startOfDay();
+            $endW = Carbon::now()->endOfWeek(Carbon::SUNDAY)->endOfDay();
             $pemasukanMingguan = Transaksi::where('status', 'selesai')->whereBetween('created_at', [$startW, $endW])->select(DB::raw('DAYOFWEEK(created_at) as hari'), DB::raw('SUM(total_harga) as total'))->groupBy('hari')->get()->pluck('total', 'hari')->toArray();
             $pengeluaranRawMingguan = DetailTransaksi::whereHas('transaksi', function ($q) use ($startW, $endW) { $q->where('status', 'selesai')->whereBetween('created_at', [$startW, $endW]); })->with('barang')->join('transaksi', 'detail_transaksi.transaksi_id', '=', 'transaksi.id')->select('detail_transaksi.*', 'transaksi.created_at as tx_date')->get();
             $pengeluaranMingguan = [];
@@ -102,13 +105,27 @@ class DashboardController extends Controller
         foreach ($detailBarangPemasukan as $item) { $item->nama = $item->nama_barang_manual ?: ($item->barang_id ? ($item->barang ? $item->barang->nama_barang : 'Produk') : 'Produk'); $item->harga_beli_satuan = $item->barang_id ? ($item->barang ? $item->barang->harga_beli : 0) : 0; $item->total_modal = $item->harga_beli_satuan * $item->total_qty; $item->keuntungan = $item->total_jual - $item->total_modal; }
         $detailJasaPemasukan = (clone $queryPemasukan)->where('biaya_jasa_servis', '>', 0)->select('jenis_motor', 'biaya_jasa_servis as nominal')->get();
 
-        // 4. Ambil Hasil Live Clustering K-Means dari Service (Minggu Berjalan)
-        $startWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
-        $endWeek = $now->copy()->endOfWeek(Carbon::SUNDAY);
-        $liveKMeans = $this->kmeansService->calculateKMeansRealtime($startWeek, $endWeek);
+        // ==========================================
+        // FIX PERBAIKAN: PAKSA TIME FORMAT START & END DAY AGAR TIDAK TERPOTONG JAM NYA
+        // ==========================================
+        $startWeekLalu = Carbon::now()->subDays(7)->startOfWeek(Carbon::MONDAY)->startOfDay()->toDateTimeString();
+        $endWeekLalu = Carbon::now()->subDays(7)->endOfWeek(Carbon::SUNDAY)->endOfDay()->toDateTimeString();
+        
+        $formatStartLalu = Carbon::parse($startWeekLalu)->translatedFormat('d F Y');
+        $formatEndLalu = Carbon::parse($endWeekLalu)->translatedFormat('d F Y');
+        $periodeLabelLalu = $formatStartLalu . ' s/d ' . $formatEndLalu;
 
-        // Urutkan berdasarkan Kategori: Laris -> Sedang -> Kurang Laris
-        $barangTerlaris = $liveKMeans->sortBy(function($item) {
+        $cekRiwayatSeeder = RiwayatClustering::where('periode', $periodeLabelLalu)->exists();
+        if (!$cekRiwayatSeeder) {
+            $this->kmeansService->saveClusterHistoryAndNotification($startWeekLalu, $endWeekLalu);
+        }
+
+        // 5. Ambil Hasil Live Clustering K-Means Minggu Berjalan untuk Tabel Dashboard
+        $startWeekNow = $now->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+        $endWeekNow = $now->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+        $liveKMeans = $this->kmeansService->calculateKMeansRealtime($startWeekNow, $endWeekNow);
+
+        $barangTerlaris = collect($liveKMeans)->sortBy(function($item) {
             if ($item->label_cluster === 'Laris') return 1;
             if ($item->label_cluster === 'Sedang') return 2;
             return 3;
@@ -132,6 +149,9 @@ class DashboardController extends Controller
 
     public function clusteringDetail(Request $request)
     {
+        Carbon::setLocale('id');
+        date_default_timezone_set('Asia/Jakarta');
+
         $now = Carbon::now();
         $bulanFilter = $request->input('bulan', $now->format('Y-m'));
         $mingguFilter = $request->input('minggu', 'Minggu 1');
@@ -141,7 +161,6 @@ class DashboardController extends Controller
         $year = intval($parts[0]);
         $month = intval($parts[1]);
 
-        // Hitung range tanggal urutan minggu secara matematis presisi
         $weekNumber = intval(filter_var($mingguFilter, FILTER_SANITIZE_NUMBER_INT));
         if ($weekNumber < 1) $weekNumber = 1;
         if ($weekNumber > 5) $weekNumber = 5;
@@ -159,7 +178,6 @@ class DashboardController extends Controller
         
         $stringPeriodeTarget = $mingguFilter . ' Bulan ' . $startOfMonth->translatedFormat('F Y');
 
-        // Pilihan Dropdown Dinamis: Lintas Tahun dan Lintas Bulan secara Aman
         $firstTransaksi = Transaksi::orderBy('created_at', 'asc')->first();
         $startYear = $firstTransaksi ? Carbon::parse($firstTransaksi->created_at)->year : ($now->year - 1);
         
@@ -172,7 +190,11 @@ class DashboardController extends Controller
         }
 
         $records = collect();
-        $periodeStringDb = $bulanFilter . '-' . str_replace(' ', '', $mingguFilter);
+        
+        $formatStart = Carbon::parse($startDate)->translatedFormat('d F Y');
+        $formatEnd = Carbon::parse($endDate)->translatedFormat('d F Y');
+        $periodeStringDb = $formatStart . ' s/d ' . $formatEnd;
+
         $recordsDb = RiwayatClustering::with('barang')->where('periode', $periodeStringDb)->get();
 
         if ($recordsDb->isNotEmpty()) {
@@ -198,7 +220,6 @@ class DashboardController extends Controller
             }
         }
 
-        // Urutkan tampilan data: Laris -> Sedang -> Kurang Laris
         $records = $records->sortBy(function($item) {
             if ($item->label_cluster === 'Laris') return 1;
             if ($item->label_cluster === 'Sedang') return 2;

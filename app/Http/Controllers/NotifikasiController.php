@@ -4,63 +4,103 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use App\Models\DetailTransaksi;
+use App\Models\Notifikasi; // Diubah penuh menggunakan nama Model Anda
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 
 class NotifikasiController extends Controller
 {
+    /**
+     * HALAMAN UTAMA NOTIFIKASI OPERASIONAL
+     */
     public function index(Request $request)
     {
         $now = Carbon::now();
         $stringPeriodeMingguIni = 'Minggu ' . $now->weekOfMonth . ' Bulan ' . $now->format('F Y');
 
-        $allNotifications = $this->hitungNotifikasiLive();
+        // 1. Jalankan sinkronisasi / kalkulasi live ke database terlebih dahulu
+        $this->generateNotifikasiKeDatabase();
 
-        // Pagination manual 10 data per halaman
-        $perPage = 10;
-        $currentPage = Paginator::resolveCurrentPage('page') ?: 1;
-        $currentItems = array_slice($allNotifications, ($currentPage - 1) * $perPage, $perPage);
-        
-        $paginatedNotifications = new LengthAwarePaginator(
-            $currentItems, 
-            count($allNotifications), 
-            $perPage, 
-            $currentPage, 
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
+        // 2. Ambil data dari tabel 'notifikasi', urutkan dari yang terbaru (desc)
+        $allNotifications = Notifikasi::orderBy('created_at', 'desc')->paginate(10);
 
-        // KUNCI PERBAIKAN: Paksa paginator manual menggunakan view simple-bootstrap / bootstrap agar HTML-nya bersih dari Tailwind raksasa
-        $paginatedNotifications->withPath($request->url());
-
+        // 3. Grouping berdasarkan tanggal buatan untuk visual tabel rekap
         $groupedNotifications = [];
-        foreach ($paginatedNotifications as $item) {
-            $groupedNotifications[$item['tanggal_group']][] = $item;
+        foreach ($allNotifications as $item) {
+            // Contoh hasil format: "Senin, 22 Jun 2026"
+            $tanggalIndo = Carbon::parse($item->created_at)->translatedFormat('l, d M Y');
+            $groupedNotifications[$tanggalIndo][] = $item;
         }
 
         return view('notifikasi.index', [
             'groupedNotifications' => $groupedNotifications,
-            'allNotifications' => $paginatedNotifications,
+            'allNotifications' => $allNotifications,
             'stringPeriodeMingguIni' => $stringPeriodeMingguIni
         ]);
     }
 
+    /**
+     * API JSON DROPDOWN NAVBAR MELAYANG
+     */
     public function getNotificationsJson()
     {
-        $allNotifications = $this->hitungNotifikasiLive();
+        // 1. Jalankan sinkronisasi sebelum diambil oleh navbar floating
+        $this->generateNotifikasiKeDatabase();
+        
+        // 2. Ambil notifikasi yang belum dibaca (is_read = false), urutkan paling baru
+        $unreadNotifications = Notifikasi::where('is_read', false)
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        // 3. Transformasikan format tanggal & jam agar informatif di dropdown melayang
+        $formattedData = $unreadNotifications->map(function($item) {
+            return [
+                'id' => $item->id,
+                'id_item' => $item->id_item,
+                'tipe' => $item->tipe,
+                'icon' => $item->icon,
+                'judul' => $item->judul,
+                'pesan' => $item->pesan,
+                // Mengambil waktu jam dan menit yang presisi
+                'waktu' => Carbon::parse($item->created_at)->translatedFormat('H:i') . ' WIB',
+            ];
+        });
         
         return response()->json([
             'status' => 'success',
-            'total' => count($allNotifications),
-            'data' => $allNotifications
+            'total' => $formattedData->count(),
+            'data' => $formattedData
         ]);
     }
 
-    private function hitungNotifikasiLive()
+    /**
+     * MARK AS READ (TANDAI SELESAI / DIBACA)
+     */
+    public function markAsRead(Request $request, $id)
+    {
+        $notif = Notifikasi::where('id_item', $id)->first();
+        if ($notif) {
+            $notif->update(['is_read' => true]);
+            return response()->json([
+                'status' => 'success', 
+                'message' => 'Notifikasi berhasil ditandai telah dibaca.'
+            ]);
+        }
+        return response()->json([
+            'status' => 'error', 
+            'message' => 'Notifikasi tidak ditemukan di database.'
+        ], 404);
+    }
+
+    /**
+     * LOGIKA ANALISIS K-MEANS & INTEGRASI SIMPAN KE DATABASE
+     */
+    private function generateNotifikasiKeDatabase()
     {
         $start = Carbon::now()->startOfWeek(Carbon::MONDAY);
         $end = Carbon::now()->endOfWeek(Carbon::SUNDAY);
+        $periodeKey = $start->format('Ymd'); // Token penanda kode minggu berjalan
         
         $semuaBarang = Barang::where('tipe_barang', 'stok')->get();
         $dataset = [];
@@ -76,11 +116,11 @@ class NotifikasiController extends Controller
                 'nama' => $b->nama_barang,
                 'stok' => (int)$b->stok,
                 'terjual' => (int)$totalTerjual,
-                'label' => 'Sedang',
-                'raw_date' => $b->updated_at ? Carbon::parse($b->updated_at) : Carbon::now()
+                'label' => 'Sedang'
             ];
         }
 
+        // Jalankan Algoritma K-Means jika ragam suku cadang memadai (K=3)
         if (count($dataset) >= 3) {
             $stokVals = array_column($dataset, 'stok');
             $jualVals = array_column($dataset, 'terjual');
@@ -115,62 +155,59 @@ class NotifikasiController extends Controller
             }
         }
 
-        $listNotifikasi = [];
+        // Eksekusi penyimpanan data terstruktur ke dalam tabel 'notifikasi'
         foreach ($dataset as $item) {
+            // 1. Kondisi Stok Kritis / Habis (Top-up Alert)
             if ($item['stok'] <= 5) {
-                $listNotifikasi[] = [
-                    'id_item' => 'stok_' . $item['kode'],
-                    'tipe' => 'stok-out',
-                    'icon' => 'fa-triangle-exclamation',
-                    'judul' => 'Stok Kritis / Habis',
-                    'kode' => $item['kode'],
-                    'nama' => $item['nama'],
-                    'tanggal_group' => $item['raw_date']->format('d M Y'),
-                    'waktu' => $item['raw_date']->format('H:i'),
-                    'pesan' => "Sisa stok produk tinggal {$item['stok']} item. Segera ajukan pemesanan ulang."
-                ];
+                Notifikasi::updateOrCreate(
+                    ['id_item' => 'stok_' . $item['kode'] . '_' . $periodeKey],
+                    [
+                        'tipe' => 'stok-out',
+                        'icon' => 'fa-triangle-exclamation',
+                        'judul' => 'Stok Kritis / Habis',
+                        'pesan' => "Sisa stok produk {$item['nama']} ({$item['kode']}) tinggal {$item['stok']} item. Segera ajukan pemesanan ulang ke supplier."
+                    ]
+                );
             }
+            
+            // 2. Kondisi Hasil Cluster Laris (Rekomendasi Restock Berbasis K-Means)
             if ($item['label'] === 'Laris') {
-                $listNotifikasi[] = [
-                    'id_item' => 'restock_' . $item['kode'],
-                    'tipe' => 'restock',
-                    'icon' => 'fa-boxes-packing',
-                    'judul' => 'Rekomendasi Tambah Stok',
-                    'kode' => $item['kode'],
-                    'nama' => $item['nama'],
-                    'tanggal_group' => Carbon::now()->startOfWeek()->format('d M Y'),
-                    'waktu' => '08:00',
-                    'pesan' => "Produk terdeteksi Sangat Laku dengan {$item['terjual']} item terjual minggu ini."
-                ];
+                Notifikasi::updateOrCreate(
+                    ['id_item' => 'restock_' . $item['kode'] . '_' . $periodeKey],
+                    [
+                        'tipe' => 'restock',
+                        'icon' => 'fa-boxes-packing',
+                        'judul' => 'Rekomendasi Tambah Stok',
+                        'pesan' => "Produk {$item['nama']} ({$item['kode']}) terdeteksi Sangat Laku dengan total {$item['terjual']} item terjual minggu ini. Disarankan melakukan restock."
+                    ]
+                );
             }
+            
+            // 3. Kondisi Stok Mengendap / Overstock (Barang Macet)
             if ($item['label'] === 'Kurang Laris' && $item['terjual'] === 0 && $item['stok'] >= 30) {
-                $listNotifikasi[] = [
-                    'id_item' => 'overstock_' . $item['kode'],
-                    'tipe' => 'overstock',
-                    'icon' => 'fa-layer-group',
-                    'judul' => 'Stok Mengendap (Macet)',
-                    'kode' => $item['kode'],
-                    'nama' => $item['nama'],
-                    'tanggal_group' => Carbon::now()->startOfWeek()->format('d M Y'),
-                    'waktu' => '08:00',
-                    'pesan' => "Stok menumpuk sebanyak {$item['stok']} item di gudang tanpa ada penjualan minggu ini."
-                ];
+                Notifikasi::updateOrCreate(
+                    ['id_item' => 'overstock_' . $item['kode'] . '_' . $periodeKey],
+                    [
+                        'tipe' => 'overstock',
+                        'icon' => 'fa-layer-group',
+                        'judul' => 'Stok Mengendap (Macet)',
+                        'pesan' => "Stok menumpuk sebanyak {$item['stok']} item pada produk {$item['nama']} ({$item['kode']}) di gudang tanpa ada catatan penjualan minggu ini."
+                    ]
+                );
             }
+            
+            // 4. Kondisi Hasil Cluster Kurang Laris Terjual Sedikit (Low Sales)
             if ($item['label'] === 'Kurang Laris' && $item['terjual'] > 0) {
-                $listNotifikasi[] = [
-                    'id_item' => 'low-sales_' . $item['kode'],
-                    'tipe' => 'low-sales',
-                    'icon' => 'fa-arrow-trend-down',
-                    'judul' => 'Evaluasi Penjualan Rendah',
-                    'kode' => $item['kode'],
-                    'nama' => $item['nama'],
-                    'tanggal_group' => Carbon::now()->startOfWeek()->format('d M Y'),
-                    'waktu' => '08:00',
-                    'pesan' => "Perputaran produk lambat, baru berhasil mencatatkan {$item['terjual']} penjualan item."
-                ];
+                Notifikasi::updateOrCreate(
+                    ['id_item' => 'low-sales_' . $item['kode'] . '_' . $periodeKey],
+                    [
+                        'tipe' => 'low-sales',
+                        'icon' => 'fa-arrow-trend-down',
+                        'judul' => 'Evaluasi Penjualan Rendah',
+                        'pesan' => "Perputaran produk {$item['nama']} ({$item['kode']}) lambat, baru berhasil mencatatkan {$item['terjual']} penjualan item pada minggu ini."
+                    ]
+                );
             }
         }
-
-        return $listNotifikasi;
     }
 }
