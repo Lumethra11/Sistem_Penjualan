@@ -29,13 +29,10 @@ ul {
     list-style: none;
 }
 
-button,
-input,
-textarea {
+button, input, textarea {
     font-family: 'Inter', sans-serif;
 }
 
-/* Penyelamat Global: Mencegah gambar offside/melewati batas */
 img {
     max-width: 100%;
     height: auto;
@@ -46,8 +43,8 @@ img {
    ROOT VARIABLES (Warna & Styling Dasar)
 ========================================================= */
 :root {
-    --primary: #1e3a8a;
-    --primary-soft: #eef2ff;
+    --primary: #2563eb;
+    --primary-soft: #eff6ff;
 
     --white: #ffffff;
     --dark: #111827;
@@ -70,13 +67,8 @@ img {
 ========================================================= */
 .main {
     margin-top: 84px;   
-    
-    /* 1. KEMBALIKAN KE 280px agar tidak tertabrak sidebar */
     margin-left: 280px; 
-    
-    /* 2. Berikan padding lega agar konten tidak menempel ke garis */
     padding: 32px 40px; 
-    
     min-height: calc(100vh - 84px);
     display: flex;
     flex-direction: column;
@@ -86,14 +78,13 @@ img {
 
 .content-wrapper {
     width: 100%;
-    /* Mencegah bungkus menyusut saat isi konten lebih panjang dari layar */
     flex: 1 0 auto; 
     display: flex;
     flex-direction: column;
 }
 
 /* =========================================================
-   GLOBAL TYPOGRAPHY
+   GLOBAL TYPOGRAPHY & COMPONENTS
 ========================================================= */
 .page-title {
     font-size: 48px;
@@ -108,9 +99,6 @@ img {
     font-weight: 500;
 }
 
-/* =========================================================
-   GLOBAL COMPONENTS (Buttons, Alerts)
-========================================================= */
 .btn {
     padding: 10px 14px;
     border-radius: 10px;
@@ -124,7 +112,6 @@ img {
     text-decoration: none;
     transition: var(--transition);
 }
-
 .btn-primary { background: #2563eb; color: #fff; }
 .btn-primary:hover { background: #1d4ed8; }
 .btn-light { background: #f3f4f6; color: #111827; }
@@ -147,28 +134,125 @@ img {
 }
 
 /* =========================================================
-   RESPONSIVE MAIN CONTENT
+   NAVBAR STRUCTURE & USER DROPDOWN
 ========================================================= */
-/* Tablet */
+.navbar {
+    width: 100%; height: 72px;
+    background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: fixed; top: 0; left: 0; z-index: 999;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; box-sizing: border-box;
+}
+.navbar-left { display: flex; align-items: center; gap: 16px; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-box {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; flex-shrink: 0;
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.22);
+}
+.logo-text { font-size: 16px; font-weight: 700; color: #111827; letter-spacing: .2px; }
+.navbar-right { display: flex; align-items: center; gap: 12px; }
+
+.nav-icon {
+    width: 40px; height: 40px; border: none; border-radius: 12px;
+    background: #f8fafc; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #6b7280; cursor: pointer; transition: var(--transition);
+}
+.nav-icon:hover { background: #eff6ff; color: var(--primary); transform: translateY(-2px); }
+
+/* User Dropdown */
+.user-dropdown { position: relative; }
+.user-trigger { border: none; background: transparent; cursor: pointer; padding: 0; }
+.user-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; overflow: hidden;
+    border: 2px solid white; box-shadow: 0 6px 15px rgba(37, 99, 235, 0.20);
+    transition: var(--transition);
+}
+.user-avatar:hover { transform: translateY(-2px) scale(1.03); }
+.dropdown-menu {
+    position: absolute; top: 60px; right: 0; width: 260px;
+    background: #ffffff; border: 1px solid #e5e7eb; border-radius: 20px; padding: 12px;
+    opacity: 0; visibility: hidden; transform: translateY(10px);
+    transition: all .25s ease; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12); z-index: 999;
+}
+.dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+/* =========================================================
+   STYLE POP-UP DROPDOWN NOTIFIKASI LONCENG GLOBAL
+========================================================= */
+.nav-notif-wrapper { 
+    position: relative; 
+    display: inline-block; 
+}
+.notification-red-dot {
+    position: absolute; top: 8px; right: 9px; width: 8px; height: 8px;
+    background-color: #EF4444; border: 1.5px solid #FFFFFF; border-radius: 50%;
+}
+.navbar-notif-dropdown {
+    position: absolute !important; top: 54px !important; right: 0 !important; width: 360px !important;
+    background: #FFFFFF !important; border: 1px solid #E2E8F0 !important; border-radius: 16px !important;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12) !important;
+    opacity: 0; visibility: hidden; transform: translateY(10px);
+    transition: all 0.25s ease-in-out !important; z-index: 1000 !important; overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+.navbar-notif-dropdown.show { 
+    opacity: 1 !important; visibility: visible !important; transform: translateY(0) !important; 
+}
+.notif-dropdown-header {
+    display: flex !important; justify-content: space-between !important; align-items: center !important;
+    padding: 14px 18px !important; background: #F8FAFC !important; border-bottom: 1px solid #E2E8F0 !important;
+}
+.notif-dropdown-header h3 { font-size: 13.5px !important; font-weight: 700 !important; color: #1E293B !important; margin: 0 !important; }
+.notif-header-count { font-size: 11px !important; background: #E0F2FE !important; color: #0369A1 !important; padding: 2px 8px !important; border-radius: 6px !important; font-weight: 700 !important; }
+
+.notif-dropdown-body { max-height: 280px !important; overflow-y: auto !important; background: #FFFFFF !important; }
+.notif-dropdown-item { display: flex !important; gap: 12px !important; padding: 14px 18px !important; border-bottom: 1px solid #F1F5F9 !important; position: relative !important; box-sizing: border-box !important; }
+.notif-dropdown-item:last-child { border-bottom: none !important; }
+
+.notif-item-icon { width: 32px !important; height: 32px !important; border-radius: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; flex-shrink: 0 !important; font-size: 13px !important; }
+.notif-item-text { text-align: left !important; flex: 1 !important; }
+.notif-item-text h4 { font-size: 12.5px !important; font-weight: 700 !important; margin: 0 0 3px 0 !important; color: #1E293B !important; }
+.notif-item-text p { font-size: 11.5px !important; color: #64748B !important; margin: 0 !important; line-height: 1.4 !important; }
+
+.notif-loading-text, .notif-empty-state { padding: 30px; text-align: center; color: #94A3B8; font-size: 12.5px; font-style: italic; }
+
+/* KUNCI DESAIN: Sesuai Tombol di Footer Pop-up */
+.notif-dropdown-footer { 
+    padding: 12px !important; background: #F8FAFC !important; border-top: 1px solid #E2E8F0 !important; box-sizing: border-box !important; 
+}
+.btn-view-all-notif {
+    display: block !important; text-align: center !important; text-decoration: none !important; width: 100% !important;
+    padding: 10px 0 !important; background: #2563EB !important; border: 1px solid #2563EB !important; border-radius: 10px !important;
+    font-size: 13px !important; font-weight: 700 !important; color: #FFFFFF !important; transition: background 0.2s !important; box-sizing: border-box !important;
+}
+.btn-view-all-notif:hover { background: #1D4ED8 !important; border-color: #1D4ED8 !important; }
+
+/* Sari Warna Kategori Notifikasi Pop-up */
+.notif-dropdown-item.type-stok-out .notif-item-icon { background: #FEE2E2 !important; color: #EF4444 !important; }
+.notif-dropdown-item.type-restock .notif-item-icon { background: #DCFCE7 !important; color: #10B981 !important; }
+.notif-dropdown-item.type-overstock .notif-item-icon { background: #FFEDD5 !important; color: #F97316 !important; }
+.notif-dropdown-item.type-low-sales .notif-item-icon { background: #F3E8FF !important; color: #8B5CF6 !important; }
+
+/* =========================================================
+   RESPONSIVE LAYOUT SYSTEM
+========================================================= */
 @media(max-width: 1100px) {
     .main { margin-left: 92px; }
 }
-
-/* Mobile Besar */
 @media(max-width: 768px) {
-    .main { 
-        margin-left: 0; 
-        padding: 22px; 
-    }
+    .main { margin-left: 0; padding: 22px; }
     .page-title { font-size: 34px; }
+    .navbar-notif-dropdown { width: 300px; right: -50px !important; }
 }
-
-/* Mobile Kecil */
 @media(max-width: 500px) {
-    .main { 
-        margin-top: 78px; /* Menyesuaikan tinggi navbar versi mobile */
-        padding: 18px; 
-    }
+    .main { margin-top: 78px; padding: 18px; }
     .page-title { font-size: 28px; }
     .page-subtitle { font-size: 14px; }
 }

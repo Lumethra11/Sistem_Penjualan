@@ -8,6 +8,7 @@ use App\Http\Controllers\KelolaUserController;
 use App\Http\Controllers\KasirController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\NotifikasiController;
 
 // Landing Page
 Route::get('/', function () {
@@ -41,6 +42,10 @@ Route::middleware('auth')->group(function () {
         // Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard/clustering-detail', [DashboardController::class, 'clusteringDetail'])->name('dashboard.clustering_detail');
+
+        // Notifikasi
+        Route::get('/notifikasi-operasional', [NotifikasiController::class, 'index'])->name('notifikasi.index');
+        Route::get('/api/notifikasi-dropdown', [NotifikasiController::class, 'getNotificationsJson'])->name('api.notifikasi');
 
         // Laporan
         Route::prefix('laporan')->name('laporan.')->group(function () {

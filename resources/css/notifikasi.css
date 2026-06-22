@@ -1,0 +1,239 @@
+/* =========================================================
+   STYLE TABEL REKAP UTAMA (HALAMAN FOKUS NOTIFIKASI)
+========================================================= */
+.notifikasi-main-wrapper { 
+    width: 100% !important; 
+    padding: 24px !important; 
+    box-sizing: border-box !important; 
+}
+
+.notif-page-header { 
+    margin-bottom: 24px !important; 
+    text-align: left !important; 
+}
+.notif-page-header h1 { 
+    font-size: 24px !important; 
+    font-weight: 700 !important; 
+    color: #1E293B !important; 
+    margin: 0 0 6px 0 !important; 
+}
+.notif-page-header p { 
+    font-size: 13.5px !important; 
+    color: #64748B !important; 
+    margin: 0 !important; 
+}
+
+.notif-table-container { 
+    background: #FFFFFF !important; 
+    border-radius: 14px !important; 
+    border: 1px solid #E2E8F0 !important; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.01) !important; 
+    overflow: hidden !important; 
+}
+.notif-table-flat { 
+    width: 100% !important; 
+    border-collapse: collapse !important; 
+    text-align: left !important; 
+    font-size: 13px !important; 
+}
+.notif-table-flat th { 
+    background: #F1F5F9 !important; 
+    color: #475569 !important; 
+    font-weight: 700 !important; 
+    padding: 14px 18px !important; 
+    border-bottom: 1px solid #E2E8F0 !important; 
+}
+.notif-table-flat td { 
+    padding: 14px 18px !important; 
+    border-bottom: 1px solid #F1F5F9 !important; 
+    vertical-align: middle !important; 
+    color: #334155 !important; 
+}
+
+/* SEPARATOR PEMISAH TANGGAL */
+.notif-date-divider-row { 
+    background-color: #F8FAFC !important; 
+}
+.date-divider-content { 
+    display: flex !important; 
+    align-items: center !important; 
+    gap: 8px !important; 
+    padding: 4px 6px !important; 
+    color: #475569 !important; 
+}
+.date-divider-content i { 
+    font-size: 14px !important; 
+    color: #2563EB !important; 
+}
+.date-divider-content span { 
+    font-size: 13px !important; 
+    font-weight: 700 !important; 
+    letter-spacing: 0.3px !important; 
+}
+
+/* BADGE ICON KATEGORI */
+.table-icon-badge { 
+    width: 34px !important; 
+    height: 32px !important; 
+    border-radius: 8px !important; 
+    display: inline-flex !important; 
+    align-items: center !important; 
+    justify-content: center !important; 
+    font-size: 13px !important; 
+}
+.badge-stok-out { background: #FEE2E2 !important; color: #EF4444 !important; }
+.badge-restock { background: #DCFCE7 !important; color: #10B981 !important; }
+.badge-overstock { background: #FFEDD5 !important; color: #F97316 !important; }
+.badge-low-sales { background: #F3E8FF !important; color: #8B5CF6 !important; }
+
+.col-date { 
+    font-weight: 600 !important; 
+    color: #64748B !important; 
+    font-size: 12.5px !important; 
+}
+
+/* BADGE STATUS TIPE */
+.text-label-type { 
+    font-size: 11.5px !important; 
+    font-weight: 700 !important; 
+    padding: 4px 10px !important; 
+    border-radius: 6px !important; 
+    display: inline-block !important; 
+}
+.label-stok-out { background: #FEE2E2 !important; color: #991B1B !important; }
+.label-restock { background: #DCFCE7 !important; color: #166534 !important; }
+.label-overstock { background: #FFEDD5 !important; color: #9A3412 !important; }
+.label-low-sales { background: #F3E8FF !important; color: #6B21A8 !important; }
+
+.col-message-box p { 
+    margin: 5px 0 0 0 !important; 
+    color: #475569 !important; 
+    font-size: 12.5px !important; 
+    line-height: 1.4 !important; 
+}
+.text-monospace { 
+    font-family: monospace !important; 
+    color: #2563EB !important; 
+    background: #EFF6FF !important; 
+    padding: 2px 6px !important; 
+    border-radius: 4px !important; 
+    font-weight: 600 !important; 
+}
+
+/* TOMBOL AKSI SELESAI */
+.btn-table-mark-read { 
+    background: #F1F5F9 !important; 
+    border: none !important; 
+    padding: 6px 14px !important; 
+    border-radius: 8px !important; 
+    font-size: 12px !important; 
+    font-weight: 600 !important; 
+    color: #475569 !important; 
+    cursor: pointer !important; 
+    transition: all 0.2s !important; 
+    display: inline-flex !important; 
+    align-items: center !important; 
+    gap: 6px !important; 
+}
+.btn-table-mark-read:hover { 
+    background: #E2E8F0 !important; 
+    color: #1E293B !important; 
+}
+.btn-table-mark-read:disabled { 
+    background: #F8FAFC !important; 
+    color: #94A3B8 !important; 
+    cursor: not-allowed !important; 
+    border: 1px solid #E2E8F0 !important; 
+}
+
+/* BARIS REDUP (SUDAH DIBACA) */
+.table-row-dimmed { 
+    opacity: 0.35 !important; 
+    background: #F8FAFC !important; 
+}
+
+/* STATE KOSONG */
+.table-empty-state {
+    text-align: center !important;
+    padding: 40px !important;
+    color: #94A3B8 !important;
+}
+
+/* =========================================================
+   BOOSTRAP-BASED PAGINATION SYSTEM (FIX OVERRIDE RATAR KANAN)
+========================================================= */
+.notif-table-pagination-footer { 
+    display: flex !important;
+    justify-content: flex-end !important; 
+    align-items: center !important;
+    padding: 16px 24px !important; 
+    background: #F8FAFC !important; 
+    border-top: 1px solid #E2E8F0 !important; 
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+/* Sembunyikan Info Teks Tambahan Default */
+.notif-table-pagination-footer p,
+.notif-table-pagination-footer small {
+    display: none !important;
+}
+
+/* Mengatur Container List Nomor Halaman */
+.notif-table-pagination-footer ul.pagination {
+    display: flex !important;
+    list-style: none !important;
+    padding-left: 0 !important;
+    margin: 0 !important;
+    gap: 6px !important;
+    align-items: center !important;
+}
+
+.notif-table-pagination-footer ul.pagination li.page-item {
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Dekorasi Kotak Nomor & Navigasi (Next/Prev) */
+.notif-table-pagination-footer ul.pagination li.page-item a.page-link,
+.notif-table-pagination-footer ul.pagination li.page-item span.page-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    padding: 0 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #E2E8F0 !important;
+    background: #FFFFFF !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+}
+
+/* Efek Hover Link Aktif */
+.notif-table-pagination-footer ul.pagination li.page-item a.page-link:hover {
+    background: #F1F5F9 !important;
+    color: #1E293B !important;
+    border-color: #CBD5E1 !important;
+}
+
+/* Penanda Halaman yang Sedang Aktif (Current Page) */
+.notif-table-pagination-footer ul.pagination li.page-item.active span.page-link {
+    background: #2563EB !important;
+    color: #FFFFFF !important;
+    border-color: #2563EB !important;
+}
+
+/* Keadaan Tombol Mati / Disabled */
+.notif-table-pagination-footer ul.pagination li.page-item.disabled span.page-link {
+    background: #F8FAFC !important;
+    color: #94A3B8 !important;
+    border-color: #E2E8F0 !important;
+    cursor: not-allowed !important;
+}
