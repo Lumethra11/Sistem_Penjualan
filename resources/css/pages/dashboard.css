@@ -115,7 +115,7 @@
 ========================================================= */
 .lower-content-grid {
     display: grid;
-    grid-template-columns: 1.6fr 1.4fr; /* Lebar ranking diperbesar sedikit agar nama sparepart lapang */
+    grid-template-columns: 1.5fr 1.5fr;
     gap: 20px;
     align-items: start;
     margin-bottom: 32px;
@@ -218,24 +218,28 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
+    max-width: 220px;
 }
 .ranking-item-meta small { font-size: 11.5px; color: #64748B; }
 
 .ranking-item-metric { text-align: right; }
 .ranking-item-metric p { font-size: 13px; font-weight: 700; color: var(--mb-text); margin: 4px 0 0 0; }
 
-/* K-MEANS OPERATIONAL BENGKEL BADGES (SINKRON SLUG STR) */
+/* =========================================================
+   K-MEANS ACADEMIC CLUSTER BADGES (SINKRON SLUG STR)
+========================================================= */
 .badge-cluster {
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 700;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 6px;
     display: inline-block;
+    text-align: center;
 }
-.badge-cluster.sangat-laku { background: #DCFCE7; color: var(--mb-success); }
-.badge-cluster.laku-normal { background: #FEF9C3; color: #D97706; }
-.badge-cluster.kurang-laku { background: #FEE2E2; color: var(--mb-danger); }
+/* Menyesuaikan dengan slug teks 'Laris', 'Sedang', 'Kurang Laris' */
+.badge-cluster.laris { background: #DCFCE7; color: #15803D; }
+.badge-cluster.sedang { background: #FEF9C3; color: #B45309; }
+.badge-cluster.kurang-laris { background: #FEE2E2; color: #B91C1C; }
 
 .empty-kmeans-box { text-align: center; color: #94A3B8; padding: 60px 0; font-size: 13px; }
 

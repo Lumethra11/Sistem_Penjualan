@@ -6,7 +6,7 @@
 <div class="dashboard-container">
     
     <div class="top-bar-dashboard">
-        <h1>Dashboard</h1>
+        <h1>Dashboard Analisis</h1>
         
         <form method="GET" action="{{ route('dashboard') }}" id="formFilterWaktu" class="filter-select-wrapper">
             <select name="filter" onchange="document.getElementById('formFilterWaktu').submit();">
@@ -69,10 +69,10 @@
             </div>
         </div>
 
-        {{-- RANKING PANEL PREVIEW (BAHASA USER BENGKEL) --}}
-        <div class="ranking-container-box clickable-panel" onclick="window.location.href='{{ route('dashboard.clustering_detail') }}'" title="Klik untuk membuka rekap riwayat berfilter lengkap">
+        {{-- RANKING PANEL PREVIEW --}}
+        <div class="ranking-container-box clickable-panel" onclick="window.location.href='{{ route('dashboard.clustering_detail') }}'" title="Klik untuk membuka riwayat analisis perputaran lengkap">
             <div class="ranking-header-inline">
-                <h2>Peringkat Perputaran Barang (Minggu Ini)</h2>
+                <h2>Analisis Perputaran Barang (Minggu Ini)</h2>
                 <span class="view-all-link-badge">Detail Riwayat <i class="fa-solid fa-arrow-right"></i></span>
             </div>
 
@@ -85,7 +85,6 @@
                             <small>Kode: {{ $bt['kode'] }} | Sisa Stok: {{ $bt['stok'] }}</small>
                         </div>
                         <div class="ranking-item-metric">
-                            {{-- Class CSS dinamis diubah menggunakan fungsi Str::slug pembentuk teks operasional --}}
                             <span class="badge-cluster {{ Str::slug($bt['label']) }}">{{ $bt['label'] }}</span>
                             <p>{{ $bt['terjual'] }} Terjual</p>
                         </div>

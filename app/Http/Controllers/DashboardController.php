@@ -6,26 +6,29 @@ use App\Models\Barang;
 use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
 use App\Models\RiwayatClustering;
-use App\Models\User;
+use App\Services\KMeansService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    protected $kmeansService;
+
+    public function __construct(KMeansService $kmeansService)
+    {
+        $this->kmeansService = $kmeansService;
+    }
+
     public function index(Request $request)
     {
         $filter = $request->query('filter', 'hari');
         $now = Carbon::now();
 
-        // 1. Jalankan Auto-Save Masa Lalu (Mengunci Hasil Minggu Lalu Otomatis Setiap Hari Senin)
-        $this->PROSES_AUTO_SAVE_KMEANS_MINGGUAN();
-
-        // 2. Total Ragam Jenis Barang Global
+        // 1. Total Ragam Jenis Barang Global
         $totalBarang = Barang::count();
 
-        // 3. Query Utama untuk Card Indikator
+        // 2. Query Utama untuk Card Indikator
         $queryPemasukan = Transaksi::where('status', 'selesai');
         $queryPengeluaran = DetailTransaksi::whereHas('transaksi', function ($q) {
             $q->where('status', 'selesai');
@@ -48,7 +51,6 @@ class DashboardController extends Controller
             });
         }
 
-        // Hitung nominal 4 Card Utama
         $totalPemasukan = (clone $queryPemasukan)->sum('total_harga');
         
         $rawPengeluaran = (clone $queryPengeluaran)->get();
@@ -60,7 +62,7 @@ class DashboardController extends Controller
 
         $stokRendah = Barang::where('tipe_barang', 'stok')->where('stok', '<=', 10)->count();
 
-        // 4. LOGIKA GRAFIK DINAMIS
+        // 3. Logika Grafik Keuangan Dinamis
         $chartLabels = []; $chartPemasukan = []; $chartPengeluaran = [];
         if ($filter === 'hari') {
             $chartLabels = ['08:00', '10:00', '12:00', '14:00', '16:00', '17:00+'];
@@ -97,17 +99,34 @@ class DashboardController extends Controller
         $pendapatanJasa = (clone $queryPemasukan)->sum('biaya_jasa_servis');
         $pendapatanBarang = $totalPemasukan - $pendapatanJasa;
         $detailBarangPemasukan = (clone $queryPengeluaran)->select('barang_id', 'nama_barang_manual', DB::raw('SUM(jumlah) as total_qty'), DB::raw('SUM(harga_jual_satuan * jumlah) as total_jual'))->groupBy('barang_id', 'nama_barang_manual')->get();
-        foreach ($detailBarangPemasukan as $item) { $item->nama = $item->nama_produk; $item->harga_beli_satuan = $item->barang_id ? ($item->barang ? $item->barang->harga_beli : 0) : 0; $item->total_modal = $item->harga_beli_satuan * $item->total_qty; $item->keuntungan = $item->total_jual - $item->total_modal; }
+        foreach ($detailBarangPemasukan as $item) { $item->nama = $item->nama_barang_manual ?: ($item->barang_id ? ($item->barang ? $item->barang->nama_barang : 'Produk') : 'Produk'); $item->harga_beli_satuan = $item->barang_id ? ($item->barang ? $item->barang->harga_beli : 0) : 0; $item->total_modal = $item->harga_beli_satuan * $item->total_qty; $item->keuntungan = $item->total_jual - $item->total_modal; }
         $detailJasaPemasukan = (clone $queryPemasukan)->where('biaya_jasa_servis', '>', 0)->select('jenis_motor', 'biaya_jasa_servis as nominal')->get();
 
-        // 5. AMBIL DATA SNAPSHOT K-MEANS REALTIME WEEK BERJALAN
-        $liveKMeans = $this->HITUNG_LOGIKA_KMEANS_LIVE(Carbon::now()->startOfWeek(Carbon::MONDAY), Carbon::now()->endOfWeek(Carbon::SUNDAY));
+        // 4. Ambil Hasil Live Clustering K-Means dari Service (Minggu Berjalan)
+        $startWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
+        $endWeek = $now->copy()->endOfWeek(Carbon::SUNDAY);
+        $liveKMeans = $this->kmeansService->calculateKMeansRealtime($startWeek, $endWeek);
+
+        // Urutkan berdasarkan Kategori: Laris -> Sedang -> Kurang Laris
+        $barangTerlaris = $liveKMeans->sortBy(function($item) {
+            if ($item->label_cluster === 'Laris') return 1;
+            if ($item->label_cluster === 'Sedang') return 2;
+            return 3;
+        })->values()->take(10)->map(function($item) {
+            return [
+                'kode' => $item->kode_barang,
+                'nama' => $item->nama_barang,
+                'stok' => $item->stok,
+                'terjual' => $item->terjual,
+                'label' => $item->label_cluster
+            ];
+        })->toArray();
 
         return view('dashboard.index', [
             'totalBarang' => $totalBarang, 'pemasukan' => $totalPemasukan, 'pengeluaran' => $totalPengeluaran, 'stokRendah' => $stokRendah,
             'chartPemasukan' => $chartPemasukan, 'chartPengeluaran' => $chartPengeluaran, 'chartLabels' => $chartLabels, 'filter' => $filter,
             'pendapatanBarang' => $pendapatanBarang, 'pendapatanJasa' => $pendapatanJasa, 'detailBarangPemasukan' => $detailBarangPemasukan,
-            'detailJasaPemasukan' => $detailJasaPemasukan, 'barangTerlaris' => $liveKMeans
+            'detailJasaPemasukan' => $detailJasaPemasukan, 'barangTerlaris' => $barangTerlaris
         ]);
     }
 
@@ -115,159 +134,81 @@ class DashboardController extends Controller
     {
         $now = Carbon::now();
         $bulanFilter = $request->input('bulan', $now->format('Y-m'));
-        $mingguFilter = $request->input('minggu', 'Minggu ' . $now->weekOfMonth);
+        $mingguFilter = $request->input('minggu', 'Minggu 1');
         $labelFilter = $request->input('label_cluster', 'all');
 
-        // Mapping konversi dari filter operasional ke kolom ENUM database riwayat_clustering
-        $dbLabelMap = [
-            'Laris' => 'Laris',
-            'Sedang' => 'Sedang',
-            'Kurang Laris' => 'Kurang Laris'
-        ];
+        $parts = explode('-', $bulanFilter);
+        $year = intval($parts[0]);
+        $month = intval($parts[1]);
 
-        $parseDate = Carbon::parse($bulanFilter . '-01');
-        $stringPeriodeTarget = $mingguFilter . ' Bulan ' . $parseDate->format('F Y');
-        $stringPeriodeMingguIni = 'Minggu ' . $now->weekOfMonth . ' Bulan ' . $now->format('F Y');
+        // Hitung range tanggal urutan minggu secara matematis presisi
+        $weekNumber = intval(filter_var($mingguFilter, FILTER_SANITIZE_NUMBER_INT));
+        if ($weekNumber < 1) $weekNumber = 1;
+        if ($weekNumber > 5) $weekNumber = 5;
+
+        $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfDay();
+        $startDay = (($weekNumber - 1) * 7) + 1;
+        $endDay = $weekNumber * 7;
+        $daysInMonth = $startOfMonth->daysInMonth;
+
+        if ($startDay > $daysInMonth) $startDay = $daysInMonth - 6;
+        if ($endDay > $daysInMonth || $weekNumber === 5) $endDay = $daysInMonth;
+
+        $startDate = Carbon::createFromDate($year, $month, $startDay)->startOfDay();
+        $endDate = Carbon::createFromDate($year, $month, $endDay)->endOfDay();
+        
+        $stringPeriodeTarget = $mingguFilter . ' Bulan ' . $startOfMonth->translatedFormat('F Y');
+
+        // Pilihan Dropdown Dinamis: Lintas Tahun dan Lintas Bulan secara Aman
+        $firstTransaksi = Transaksi::orderBy('created_at', 'asc')->first();
+        $startYear = $firstTransaksi ? Carbon::parse($firstTransaksi->created_at)->year : ($now->year - 1);
+        
+        $opsiPeriodeBulan = [];
+        for ($y = $now->year; $y >= $startYear; $y--) {
+            $maxMonth = ($y === $now->year) ? $now->month : 12;
+            for ($m = $maxMonth; $m >= 1; $m--) {
+                $opsiPeriodeBulan[] = sprintf('%04d-%02d', $y, $m);
+            }
+        }
 
         $records = collect();
+        $periodeStringDb = $bulanFilter . '-' . str_replace(' ', '', $mingguFilter);
+        $recordsDb = RiwayatClustering::with('barang')->where('periode', $periodeStringDb)->get();
 
-        if ($stringPeriodeTarget === $stringPeriodeMingguIni) {
-            $liveData = $this->HITUNG_LOGIKA_KMEANS_LIVE(Carbon::now()->startOfWeek(Carbon::MONDAY), Carbon::now()->endOfWeek(Carbon::SUNDAY));
-            foreach ($liveData as $ld) {
-                if ($labelFilter === 'all' || $ld['label'] === $ld['label_asli']) {
-                    $records->push((object) [
-                        'kode_barang' => $ld['kode'],
-                        'nama_barang_live' => $ld['nama'],
-                        'nilai_x_stok' => $ld['stok'],
-                        'nilai_y_terjual' => $ld['terjual'],
-                        'label_cluster' => $ld['label'] // Menggunakan teks operasional bengkel
-                    ]);
-                }
-            }
-        } else {
-            $dbData = RiwayatClustering::with('barang')->where('periode', $stringPeriodeTarget);
-            if ($labelFilter !== 'all') { 
-                $dbData->where('label_cluster', $dbLabelMap[$labelFilter]); 
-            }
-            $dbRecords = $dbData->get();
-
-            // Mapping bahasa DB ke bahasa operasional bengkel saat penarikan arsip lawas
-            foreach ($dbRecords as $rec) {
-                $labelTeks = 'Kurang Laku';
-                if ($rec->label_cluster === 'Laris') $labelTeks = 'Sangat Laku';
-                if ($rec->label_cluster === 'Sedang') $labelTeks = 'Laku Normal';
-
+        if ($recordsDb->isNotEmpty()) {
+            foreach ($recordsDb as $rec) {
                 $records->push((object) [
                     'kode_barang' => $rec->kode_barang,
                     'nama_barang_live' => $rec->barang->nama_barang ?? 'Produk Dihapus',
                     'nilai_x_stok' => $rec->nilai_x_stok,
                     'nilai_y_terjual' => $rec->nilai_y_terjual,
-                    'label_cluster' => $labelTeks
+                    'label_cluster' => $rec->label_cluster
+                ]);
+            }
+        } else {
+            $liveData = $this->kmeansService->calculateKMeansRealtime($startDate, $endDate);
+            foreach ($liveData as $ld) {
+                $records->push((object) [
+                    'kode_barang' => $ld->kode_barang,
+                    'nama_barang_live' => $ld->nama_barang,
+                    'nilai_x_stok' => $ld->stok,
+                    'nilai_y_terjual' => $ld->terjual,
+                    'label_cluster' => $ld->label_cluster
                 ]);
             }
         }
 
-        $opsiPeriodeBulan = RiwayatClustering::select('tanggal_proses')->distinct()->get()->map(function($d) {
-            return Carbon::parse($d->tanggal_proses)->format('Y-m');
-        })->push($now->format('Y-m'))->unique();
+        // Urutkan tampilan data: Laris -> Sedang -> Kurang Laris
+        $records = $records->sortBy(function($item) {
+            if ($item->label_cluster === 'Laris') return 1;
+            if ($item->label_cluster === 'Sedang') return 2;
+            return 3;
+        })->values();
 
-        return view('dashboard.clustering_detail', compact('records', 'bulanFilter', 'mingguFilter', 'labelFilter', 'opsiPeriodeBulan', 'stringPeriodeTarget', 'stringPeriodeMingguIni'));
-    }
-
-    private function HITUNG_LOGIKA_KMEANS_LIVE($start, $end)
-    {
-        $semuaBarang = Barang::all();
-        $dataset = [];
-
-        foreach ($semuaBarang as $b) {
-            $totalTerjual = DetailTransaksi::where('barang_id', $b->id)->whereHas('transaksi', function($q) use ($start, $end) {
-                $q->where('status', 'selesai')->whereBetween('created_at', [$start, $end]);
-            })->sum('jumlah');
-
-            $dataset[] = [
-                'kode' => $b->kode_barang, 'nama' => $b->nama_barang,
-                'stok' => (int)$b->stok, 'terjual' => (int)$totalTerjual, 'label' => 'Sedang'
-            ];
+        if ($labelFilter !== 'all') {
+            $records = $records->where('label_cluster', $labelFilter);
         }
 
-        if (count($dataset) >= 3) {
-            $stokVals = array_column($dataset, 'stok');
-            $jualVals = array_column($dataset, 'terjual');
-            $centroids = [
-                'Laris' => ['stok' => min($stokVals), 'terjual' => max($jualVals)],
-                'Sedang' => ['stok' => array_sum($stokVals)/count($stokVals), 'terjual' => array_sum($jualVals)/count($jualVals)],
-                'Kurang Laris' => ['stok' => max($stokVals), 'terjual' => min($jualVals)]
-            ];
-
-            for ($i = 0; $i < 20; $i++) {
-                $clusterBaru = ['Laris' => [], 'Sedang' => [], 'Kurang Laris' => []];
-                foreach ($dataset as $idx => $data) {
-                    $jarakLaris  = sqrt(pow($data['stok'] - $centroids['Laris']['stok'], 2) + pow($data['terjual'] - $centroids['Laris']['terjual'], 2));
-                    $jarakSedang = sqrt(pow($data['stok'] - $centroids['Sedang']['stok'], 2) + pow($data['terjual'] - $centroids['Sedang']['terjual'], 2));
-                    $jarakKurang = sqrt(pow($data['stok'] - $centroids['Kurang Laris']['stok'], 2) + pow($data['terjual'] - $centroids['Kurang Laris']['terjual'], 2));
-                    $minJarak = min($jarakLaris, $jarakSedang, $jarakKurang);
-                    
-                    $label = ($minJarak == $jarakLaris) ? 'Laris' : (($minJarak == $jarakSedang) ? 'Sedang' : 'Kurang Laris');
-                    
-                    // PROTEKSI ABSOLUT ANGKA 0: Paksa barang yang tidak terjual masuk ke kelompok Kurang Laku
-                    if ($data['terjual'] === 0) {
-                        $label = 'Kurang Laris';
-                    }
-
-                    $dataset[$idx]['label'] = $label;
-                    $clusterBaru[$label][] = $data;
-                }
-                $centroidsLama = $centroids;
-                foreach (['Laris', 'Sedang', 'Kurang Laris'] as $l) {
-                    if (count($clusterBaru[$l]) > 0) {
-                        $centroids[$l]['stok'] = array_sum(array_column($clusterBaru[$l], 'stok')) / count($clusterBaru[$l]);
-                        $centroids[$l]['terjual'] = array_sum(array_column($clusterBaru[$l], 'terjual')) / count($clusterBaru[$l]);
-                    }
-                }
-                if ($centroidsLama == $centroids) { break; }
-            }
-        }
-        
-        // Transformasikan penamaan label bahasa developer ke bahasa operasional owner bengkel sebelum dirender ke Blade
-        return collect($dataset)->map(function($item) {
-            $item['label_asli'] = $item['label']; // simpan pembanding filter
-            if ($item['label'] === 'Laris') $item['label'] = 'Sangat Laku';
-            elseif ($item['label'] === 'Sedang') $item['label'] = 'Laku Normal';
-            else $item['label'] = 'Kurang Laku';
-            return $item;
-        })->sortByDesc('terjual')->values()->all();
-    }
-
-    private function PROSES_AUTO_SAVE_KMEANS_MINGGUAN()
-    {
-        $seninLalu = Carbon::now()->subWeek()->startOfWeek(Carbon::MONDAY);
-        $mingguKemarin = Carbon::now()->subWeek()->endOfWeek(Carbon::SUNDAY);
-        $periodeStr = 'Minggu ke-' . $seninLalu->weekOfMonth . ' Bulan ' . $seninLalu->format('F Y');
-
-        $sudahAda = RiwayatClustering::where('periode', $periodeStr)->exists();
-        if (!$sudahAda) {
-            $hasilMingguLalu = $this->HITUNG_LOGIKA_KMEANS_LIVE($seninLalu, $mingguKemarin);
-            if (count($hasilMingguLalu) > 0) {
-                DB::beginTransaction();
-                try {
-                    foreach ($hasilMingguLalu as $row) {
-                        // Kembalikan nama ke ENUM asli database ('Laris', 'Sedang', 'Kurang Laris') khusus saat save data
-                        $dbLabel = 'Kurang Laris';
-                        if ($row['label'] === 'Sangat Laku') $dbLabel = 'Laris';
-                        if ($row['label'] === 'Laku Normal') $dbLabel = 'Sedang';
-
-                        RiwayatClustering::create([
-                            'tanggal_proses'  => Carbon::now()->toDateString(),
-                            'periode'         => $periodeStr,
-                            'kode_barang'     => $row['kode'],
-                            'nilai_x_stok'    => $row['stok'],
-                            'nilai_y_terjual' => $row['terjual'],
-                            'label_cluster'   => $dbLabel
-                        ]);
-                    }
-                    DB::commit();
-                } catch (\Exception $e) { DB::rollBack(); }
-            }
-        }
+        return view('dashboard.clustering_detail', compact('records', 'bulanFilter', 'mingguFilter', 'labelFilter', 'opsiPeriodeBulan', 'stringPeriodeTarget'));
     }
 }

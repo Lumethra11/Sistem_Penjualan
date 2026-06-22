@@ -19,13 +19,11 @@
             <div class="detail-filter-group">
                 <label>Pilih Bulan & Tahun</label>
                 <select name="bulan" onchange="document.getElementById('formFilterDetailCluster').submit()">
-                    @forelse($opsiPeriodeBulan as $bln)
+                    @foreach($opsiPeriodeBulan as $bln)
                         <option value="{{ $bln }}" {{ $bulanFilter === $bln ? 'selected' : '' }}>
                             {{ date('F Y', strtotime($bln . '-01')) }}
                         </option>
-                    @empty
-                        <option value="{{ date('Y-m') }}">{{ date('F Y') }}</option>
-                    @endforelse
+                    @endforeach
                 </select>
             </div>
 
@@ -44,9 +42,9 @@
                 <label>Saring Kategori Penjualan</label>
                 <select name="label_cluster" onchange="document.getElementById('formFilterDetailCluster').submit()">
                     <option value="all" {{ $labelFilter === 'all' ? 'selected' : '' }}>Semua Hasil Analisis</option>
-                    <option value="Laris" {{ $labelFilter === 'Laris' ? 'selected' : '' }}>Hanya Barang Sangat Laku</option>
-                    <option value="Sedang" {{ $labelFilter === 'Sedang' ? 'selected' : '' }}>Hanya Barang Laku Normal</option>
-                    <option value="Kurang Laris" {{ $labelFilter === 'Kurang Laris' ? 'selected' : '' }}>Hanya Barang Kurang Laku</option>
+                    <option value="Laris" {{ $labelFilter === 'Laris' ? 'selected' : '' }}>Laris</option>
+                    <option value="Sedang" {{ $labelFilter === 'Sedang' ? 'selected' : '' }}>Sedang</option>
+                    <option value="Kurang Laris" {{ $labelFilter === 'Kurang Laris' ? 'selected' : '' }}>Kurang Laris</option>
                 </select>
             </div>
 
@@ -57,7 +55,7 @@
     <div class="ranking-container-box" style="padding: 28px;">
         <div class="ranking-header-inline" style="border-bottom: 2px solid #F8FAFC; padding-bottom: 12px; margin-bottom: 20px;">
             <h2 style="font-size: 16px;">Hasil Penilaian Stok: <span style="color: var(--mb-primary); font-weight: 800;">{{ $stringPeriodeTarget }}</span></h2>
-            <span class="badge-total-count-items" style="background: #F1F5F9; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;">{{ $records->count() }} Macam Sparepart</span>
+            <span class="badge-total-count-items" style="background: #F1F5F9; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;">{{ $records->count() }} Macam</span>
         </div>
 
         <div style="width: 100%; overflow-x: auto;">
@@ -66,9 +64,9 @@
                     <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
                         <th style="padding: 12px; font-size: 13px; font-weight: 700; color: #475569; text-align: left;">Kode Sparepart</th>
                         <th style="padding: 12px; font-size: 13px; font-weight: 700; color: #475569; text-align: left;">Nama Item Barang</th>
-                        <th style="padding: 12px; font-size: 13px; font-weight: 700; color: #475569; text-align: center;">Sisa Stok Gudang</th>
-                        <th style="padding: 12px; font-size: 13px; font-weight: 700; color: #475569; text-align: center;">Kuantitas Terjual</th>
-                        <th style="padding: 12px; font-size: 13px; font-weight: 700; color: #475569; text-align: center;">Status Perputaran</th>
+                        <th style="padding: 12px; font-size: 13px; font-weight: 700; color: #475569; text-align: center;">Sisa Stok</th>
+                        <th style="padding: 12px; font-size: 13px; font-weight: 700; color: #475569; text-align: center;">Terjual</th>
+                        <th style="padding: 12px; font-size: 13px; font-weight: 700; color: #475569; text-align: center;">Kategori</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -85,7 +83,7 @@
                     @empty
                         <tr>
                             <td colspan="5" style="text-align: center; color: #94A3B8; padding: 40px 0; font-style: italic;">
-                                Belum ada rekap data perputaran barang yang dikunci pada periode filter ini.
+                                Tidak ada data hasil clustering suku cadang pada periode minggu yang Anda pilih.
                             </td>
                         </tr>
                     @endforelse
