@@ -66,28 +66,29 @@ class KMeansService
             $changed = false;
 
             foreach ($dataset as $data) {
-                if ($data['terjual'] === 0) {
-                    $closestCluster = 'Kurang Laris';
-                } else {
-                    $closestCluster = 'Kurang Laris';
-                    $minDistance = INF;
 
-                    foreach ($centroids as $label => $centroid) {
-                        $dist = sqrt(
-                            pow($data['terjual'] - $centroid['terjual'], 2) + 
-                            pow($data['stok'] - $centroid['stok'], 2)
-                        );
+                $closestCluster = null;
+                $minDistance = INF;
 
-                        if ($dist < $minDistance) {
-                            $minDistance = $dist;
-                            $closestCluster = $label;
-                        }
+                foreach ($centroids as $label => $centroid) {
+
+                    $dist = sqrt(
+                        pow($data['terjual'] - $centroid['terjual'], 2) +
+                        pow($data['stok'] - $centroid['stok'], 2)
+                    );
+
+                    if ($dist < $minDistance) {
+                        $minDistance = $dist;
+                        $closestCluster = $label;
                     }
                 }
 
                 $newGroups[$closestCluster][] = $data;
 
-                if (!isset($assignments[$data['kode_barang']]) || $assignments[$data['kode_barang']] !== $closestCluster) {
+                if (
+                    !isset($assignments[$data['kode_barang']]) ||
+                    $assignments[$data['kode_barang']] !== $closestCluster
+                ) {
                     $assignments[$data['kode_barang']] = $closestCluster;
                     $changed = true;
                 }
@@ -114,12 +115,12 @@ class KMeansService
         }
 
         return collect($dataset)->map(function($item) use ($assignments) {
-            if ($item['terjual'] === 0) {
-                $item['label_cluster'] = 'Kurang Laris';
-            } else {
-                $item['label_cluster'] = $assignments[$item['kode_barang']] ?? 'Kurang Laris';
-            }
+
+            $item['label_cluster'] =
+                $assignments[$item['kode_barang']] ?? 'Kurang Laris';
+
             return (object)$item;
+
         })->values();
     }
 

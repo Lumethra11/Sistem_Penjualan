@@ -10,21 +10,60 @@
             width: 300px; 
             margin: 0 auto; 
             color: #000; 
+            position: relative;
         }
         .center { text-align: center; }
         .text-right { text-align: right; }
         .line { border-bottom: 1px dashed #000; margin: 10px 0; }
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; position: relative; z-index: 2; }
         td, th { padding: 4px 0; vertical-align: top; }
         th { text-align: left; }
         
+        .header-section {
+            position: relative;
+            z-index: 2;
+        }
         .header-section p {
             margin: 4px 0 0 0;
             font-size: 13px;
         }
+
+        /* WATERMARK LOGO GRAFIS */
+        .watermark-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px; 
+            height: 180px;
+            object-fit: contain;
+            opacity: 0.08; /* Transparansi tipis (8%) agar teks nota tajam */
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* WATERMARK TEKS CADANGAN (Jika foto tidak ada) */
+        .watermark-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg); /* Dimiringkan agar estetik */
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: rgba(0, 0, 0, 0.06); /* Sangat samar */
+            text-align: center;
+            width: 280px;
+            z-index: 1;
+            pointer-events: none;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
         @media print {
-            body { width: 100%; margin: 0; }
+            body { width: 100%; margin: 0; position: relative; }
             .no-print { display: none; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
 </head>
@@ -32,42 +71,55 @@
 
     @php
         $userAktif = $transaksi->user;
+        $namaToko = null;
+        $alamatToko = null;
+        $fotoAdmin = null;
         
-        // JIKA KASIR YANG MEMBUAT: Tarik data Toko & Alamat dari Admin di atasnya
+        // JIKA KASIR YANG MEMBUAT: Tarik data dari Admin di atasnya
         if ($userAktif && $userAktif->role === 'kasir' && $userAktif->admin) {
             $namaToko = $userAktif->admin->nama_toko;
             $alamatToko = $userAktif->admin->alamat;
-        } else {
+            $fotoAdmin = $userAktif->admin->foto_profil; 
+        } else if ($userAktif && $userAktif->role === 'admin') {
             // JIKA ADMIN YANG MEMBUAT LANGSUNG
-            $namaToko = $userAktif->nama_toko ?? 'BENGKEL AA MOTOR';
-            $alamatToko = $userAktif->alamat ?? '';
+            $namaToko = $userAktif->nama_toko;
+            $alamatToko = $userAktif->alamat;
+            $fotoAdmin = $userAktif->foto_profil; 
         }
 
         // LOGIKA AMBIL NOMINAL BAYAR & KEMBALIAN
-        // Memeriksa apakah kolom bayar/kembalian ada di database, jika tidak ada pakai fallback request dinamis
         $nominalBayar = $transaksi->bayar ?? $transaksi->diterima ?? request('nominal_bayar', 0);
         $kembalian = $transaksi->kembalian ?? request('kembalian', 0);
 
-        // Jika data di atas masih 0 dan transaksinya tunai, kita coba kalkulasi atau ambil dari input halaman sebelumnya
         if ($transaksi->metode_pembayaran === 'Tunai' && $nominalBayar == 0) {
-            // Mengambil state dari pengisian form jika dilemparkan via session/request
             $nominalBayar = session('nominal_bayar') ?? 0;
             $kembalian = session('kembalian') ?? 0;
         }
     @endphp
 
-    {{-- HEADER NOTA KEMBALI KE DESAIN AWAL YANG COCOK DAN BAGUS --}}
+    {{-- LOGIKA WATERMARK DINAMIS SISTEM PUBLIK --}}
+    @if(!empty($fotoAdmin) && file_exists(public_path('uploads/profile/' . $fotoAdmin)))
+        {{-- JIKA FOTO PROFIL ADA, GUNAKAN WATERMARK GAMBAR (Mengarah ke folder uploads/profile) --}}
+        <img src="{{ asset('uploads/profile/' . $fotoAdmin) }}" class="watermark-img" alt="Logo">
+    @elseif(!empty($namaToko))
+        {{-- JIKA FOTO TIDAK ADA, GENERATE WATERMARK TEKS NAMA TOKO --}}
+        <div class="watermark-text">{{ $namaToko }}</div>
+    @endif
+
+    {{-- HEADER NOTA --}}
     <div class="center header-section">
-        <h2>{{ $namaToko }}</h2>
-        <p>{!! nl2br(e($alamatToko)) !!}</p>
+        <h2>{{ $namaToko ?? '-' }}</h2>
+        @if(!empty($alamatToko))
+            <p>{!! nl2br(e($alamatToko)) !!}</p>
+        @endif
     </div>
 
     <div class="line"></div>
 
-    {{-- METADATA INFORMASI NOTA KASIR --}}
+    {{-- METADATA INFORMASI NOTA --}}
     <table>
         <tr>
-            <td>Inv</td>
+            <td style="width: 70px;">Inv</td>
             <td>: {{ $transaksi->no_invoice }}</td>
         </tr>
         <tr>
@@ -76,7 +128,7 @@
         </tr>
         <tr>
             <td>Mtr</td>
-            <td>: {{ $transaksi->jenis_motor ?? '-' }}</td>
+            <td>: {{ $transaksi->jenis_motor ?? 'Motor' }} ({{ $transaksi->nomor_kendaraan ?? '-' }})</td>
         </tr>
         <tr>
             <td>Metode</td>
@@ -96,7 +148,7 @@
 
     <div class="line"></div>
 
-    {{-- LIST ITEM BARANG BELANJAAN --}}
+    {{-- LIST ITEM BARANG --}}
     <table>
         @foreach($transaksi->details as $item)
         <tr>
@@ -124,7 +176,6 @@
             <th class="text-right">Rp {{ number_format($transaksi->total_harga, 0, ',', '.') }}</th>
         </tr>
 
-        {{-- TAMBAHAN FITUR: Menampilkan Cash/Tunai, Bayar, dan Kembalian --}}
         @if($transaksi->metode_pembayaran === 'Tunai' && $nominalBayar > 0)
         <tr>
             <td>Dibayar (Tunai)</td>
@@ -139,7 +190,7 @@
 
     <div class="line"></div>
 
-    <div class="center">
+    <div class="center" style="position: relative; z-index: 2;">
         <p>Terima kasih atas kunjungan Anda!</p>
     </div>
 

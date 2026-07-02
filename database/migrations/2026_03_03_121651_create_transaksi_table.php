@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('no_invoice')->unique();
             $table->foreignId('user_id')->constrained('users');
             $table->string('jenis_motor')->nullable();
+            $table->string('nomor_kendaraan')->nullable();
             $table->integer('biaya_jasa_servis')->default(0);
             $table->integer('total_harga');
             $table->string('metode_pembayaran');

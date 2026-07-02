@@ -10,7 +10,7 @@
     
     --ks-primary: #1E3A8A;      /* Biru Gelap */
     --ks-primary-light: #2563EB; /* Biru Terang */
-    --ks-success: #22C55E;       /* Hijau */
+    --ks-success: #22C55E;        /* Hijau */
     --ks-danger: #EF4444;        /* Merah */
     --ks-warning: #FEF08A;       /* Kuning */
     --ks-warning-text: #854D0E;
@@ -27,7 +27,7 @@
 }
 
 /* =========================================================
-   HEADER & TABS
+   HEADER & TABS (Berlaku di Transaksi & Riwayat)
 ========================================================= */
 .kasir-header {
     display: flex;
@@ -70,7 +70,7 @@
 }
 
 /* =========================================================
-   LAYOUT DINAMIS
+   LAYOUT DINAMIS PANELS
 ========================================================= */
 .kasir-layout {
     display: flex;
@@ -118,7 +118,6 @@
     background: var(--ks-primary-light);
 }
 
-/* PERBAIKAN: Efek style tombol panah waktu panel sedang terbuka */
 .add-draft-btn.btn-close-state {
     background: #64748B;
     font-size: 16px;
@@ -148,7 +147,7 @@
 }
 
 /* =========================================================
-   PERBAIKAN: STYLING DRAFT EMPTY CONTAINER
+   DRAFT EMPTY CONTAINER
 ========================================================= */
 .draft-empty-box {
     background: var(--ks-card);
@@ -314,7 +313,7 @@ input:focus, select:focus {
 }
 
 /* =========================================================
-   BUTTONS
+   BUTTONS GENERAL
 ========================================================= */
 .btn-blue, .btn-dark-blue, .btn-green, .btn-red {
     height: 44px;
@@ -354,6 +353,7 @@ input:focus, select:focus {
     color: #fff;
 }
 
+/* REVISI STYLE: Tombol Cetak Nota di Halaman History / Riwayat */
 .btn-print-nota {
     background: #E0F2FE;
     color: #0284C7;
@@ -364,6 +364,8 @@ input:focus, select:focus {
     font-size: 12px;
     transition: 0.2s;
     display: inline-block;
+    border: none;
+    cursor: pointer;
 }
 
 .btn-print-nota:hover {
@@ -372,7 +374,7 @@ input:focus, select:focus {
 }
 
 /* =========================================================
-   TABLE ITEM TRANSAKSI
+   TABLE ITEM TRANSAKSI KASIR
 ========================================================= */
 .items-table-container {
     margin-top: 32px;
@@ -419,7 +421,7 @@ input:focus, select:focus {
 }
 
 /* =========================================================
-   SUMMARY KEMBALIAN & TOTAL
+   SUMMARY SECTION (KASIR UTAMA - SEJAJAR KANAN & LOCK 200PX)
 ========================================================= */
 .summary-section {
     margin-top: 24px;
@@ -442,19 +444,46 @@ input:focus, select:focus {
     margin-bottom: 0;
 }
 
-.input-nominal {
-    width: 200px;
-    height: 40px;
-    background: #F1F5F9;
-    text-align: right;
-    border: 1px solid #CBD5E1;
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--ks-text);
+.summary-row.line-separator {
+    margin-bottom: 12px;
+    border-bottom: 1px dashed #E2E8F0;
+    padding-bottom: 12px;
 }
 
-.input-nominal:focus {
-    background: #fff;
+/* REVISI UTAMA: Mengunci lebar seluruh input kalkulasi bawah sama rata 200px */
+.summary-row select,
+.summary-row input[type="number"],
+.summary-section .input-nominal {
+    width: 200px !important; 
+    height: 40px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ks-text);
+    padding: 0 12px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.summary-row select:focus,
+.summary-row input[type="number"]:focus,
+.summary-section .input-nominal:focus {
+    background: #FFFFFF;
+    border-color: var(--ks-primary-light);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.summary-section .input-nominal {
+    background: #F1F5F9;
+}
+
+.summary-row select {
+    text-align-last: right;
+    padding-right: 12px;
+    cursor: pointer;
 }
 
 .summary-row.total {
@@ -482,7 +511,7 @@ input:focus, select:focus {
 }
 
 /* =========================================================
-   HISTORY TABLE
+   REVISI CONTAINER & TABEL HALAMAN HISTORY / RIWAYAT
 ========================================================= */
 .table-container {
     background: var(--ks-card);
@@ -490,6 +519,7 @@ input:focus, select:focus {
     padding: 28px;
     border: 1px solid var(--ks-border);
     box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    margin-top: 10px;
 }
 
 .table-container h3 {
@@ -497,6 +527,7 @@ input:focus, select:focus {
     font-weight: 700;
     margin-bottom: 20px;
     margin-top: 0;
+    color: var(--ks-text);
 }
 
 .history-table {
@@ -519,6 +550,7 @@ input:focus, select:focus {
     font-size: 14px;
     color: var(--ks-text-muted);
     border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
 }
 
 .history-table tr:hover td {

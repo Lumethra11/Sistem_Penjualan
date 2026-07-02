@@ -101,10 +101,17 @@ class TestingKMeansSeeder extends Seeder
 
                     $noInvoice = 'INV-' . $waktuSpesifik->format('ymd') . '-' . str_pad($inv, 2, '0', STR_PAD_LEFT);
                     
+                    // --- LOGIKA SIMULASI NOMOR KENDARAAN (PLAT NOMOR) ---
+                    $kodeWilayah = ['P', 'DK', 'L', 'N', 'B'][rand(0, 4)]; // Preferensi Khas Jawa Timur / Bali
+                    $angkaPlat = rand(1000, 9999);
+                    $seriBelakang = chr(rand(65, 90)) . chr(rand(65, 90)); // Hasil acak huruf AA-ZZ
+                    $platNomorSimulasi = $kodeWilayah . ' ' . $angkaPlat . ' ' . $seriBelakang;
+
                     $transaksi = Transaksi::create([
                         'no_invoice'        => $noInvoice,
                         'user_id'           => $kasir->id,
                         'jenis_motor'       => ['Beat FI', 'Vario 125', 'Scoopy ESP', 'Mio M3', 'Supra X'][rand(0, 4)],
+                        'nomor_kendaraan'   => $platNomorSimulasi, // <-- Kolom baru berhasil disuntikkan data testing
                         'biaya_jasa_servis' => [0, 25000, 35000][rand(0, 2)],
                         'total_harga'       => 0,
                         'metode_pembayaran' => ['Tunai', 'Transfer', 'QRIS'][rand(0, 2)],
@@ -129,10 +136,10 @@ class TestingKMeansSeeder extends Seeder
                         $itemsNotaIni[] = ['barang' => $barangInstances[$kodeSedang], 'qty' => rand(1, 2)];
                     }
 
-                    // 3. Peluang 25% membeli barang kategori Kurang Laris (seperti Aki/Ban yang jarang diganti)
+                    // 3. Peluang 25% membeli barang kategori Kurang Laris
                     if (rand(1, 100) <= 25) {
                         $kodeKurang = $kurangLarisKodes[array_rand($kurangLarisKodes)];
-                        $itemsNotaIni[] = ['barang' => $barangInstances[$kodeKurang], 'qty' => 1];
+                        $itemsNotaIni[] = ['barang' => $barangInstances[$kurangKurangLarisKodes ?? $kodeKurang], 'qty' => 1];
                     }
 
                     // Pemrosesan item transaksi
@@ -191,7 +198,7 @@ class TestingKMeansSeeder extends Seeder
             DB::commit();
             $this->command->info("==========================================================================");
             $this->command->info(" SEEDER BERHASIL: Transaksi berturut-turut 7 hari penuh di W3 sukses!");
-            $this->command->info(" Silakan buka/refresh Dashboard utama untuk memicu penyimpanan riwayat.");
+            $this->command->info(" Kolom 'nomor_kendaraan' telah berhasil diisi secara acak.");
             $this->command->info("==========================================================================");
 
         } catch (\Exception $e) {

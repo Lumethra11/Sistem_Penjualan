@@ -15,9 +15,12 @@ class Transaksi extends Model
         'no_invoice',
         'user_id',
         'jenis_motor',
+        'nomor_kendaraan',
         'biaya_jasa_servis',
         'total_harga',
         'metode_pembayaran',
+        'bayar',
+        'kembalian',
         'status',
     ];
 

@@ -33,7 +33,7 @@
                         @foreach($drafts as $draft)
                         <div class="draft-card" onclick="loadDraft({{ $draft->id }})">
                             <div class="draft-top">
-                                <h4>{{ $draft->jenis_motor ?? 'Motor' }}</h4>
+                                <h4>{{ $draft->jenis_motor ?? 'Motor' }} {{ $draft->nomor_kendaraan ? '['.$draft->nomor_kendaraan.']' : '' }}</h4>
                                 <span class="badge">Draft</span>
                             </div>
                             <div class="draft-info">
@@ -56,14 +56,9 @@
                 
                 <div class="panel-section">
                     <h3>Informasi Transaksi</h3>
-                    <div class="form-grid-3"> 
+                    <div class="form-grid-2" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"> 
                         <input type="text" name="jenis_motor" id="formJenisMotor" placeholder="Jenis Motor" required>
-                        <select name="metode_pembayaran" id="formMetode">
-                            <option value="Tunai">Tunai</option>
-                            <option value="Transfer">Transfer</option>
-                            <option value="QRIS">QRIS</option>
-                        </select>
-                        <input type="number" name="biaya_jasa_servis" id="formBiayaJasa" placeholder="Biaya Jasa Servis" onkeyup="kalkulasiTotal()" onchange="kalkulasiTotal()">
+                        <input type="text" name="nomor_kendaraan" id="formNomorKendaraan" placeholder="No. Kendaraan (Plat Nomor)">
                     </div>
                 </div>
 
@@ -142,8 +137,24 @@
                     </table>
                 </div>
 
+                {{-- SUMMARY SECTION --}}
                 <div class="summary-section">
                     <input type="hidden" name="total_tagihan" id="inputTotalTagihan" value="0">
+                    
+                    <div class="summary-row line-separator">
+                        <span>Biaya Jasa Servis</span>
+                        <input type="number" name="biaya_jasa_servis" id="formBiayaJasa" placeholder="0" onkeyup="kalkulasiTotal()" onchange="kalkulasiTotal()">
+                    </div>
+
+                    <div class="summary-row line-separator">
+                        <span>Metode Pembayaran</span>
+                        <select name="metode_pembayaran" id="formMetode" onchange="toggleMetodePembayaran()">
+                            <option value="Tunai">Tunai</option>
+                            <option value="Transfer">Transfer</option>
+                            <option value="QRIS">QRIS</option>
+                        </select>
+                    </div>
+
                     <div class="summary-row">
                         <span>Total Barang</span>
                         <span id="textTotalBarang">Rp. 0</span>
@@ -152,14 +163,17 @@
                         <span>Jasa Servis</span>
                         <span id="textJasaServis">Rp. 0</span>
                     </div>
-                    <div class="summary-row">
+                    
+                    <div class="summary-row" id="rowNominalBayar">
                         <span>Nominal Dibayar</span>
                         <input type="number" id="inputNominal" name="bayar" class="input-nominal" onkeyup="hitungKembalian()" placeholder="0">
                     </div>
-                    <div class="summary-row">
+                    
+                    <div class="summary-row" id="rowKembalian">
                         <span>Kembalian</span>
                         <span id="textKembalian">Rp. 0</span>
                     </div>
+                    
                     <div class="summary-row total">
                         <span>Total Tagihan Akhir</span>
                         <span id="textTotalAkhir">Rp. 0</span>
@@ -178,26 +192,23 @@
     </div>
 </div>
 
-{{-- PERBAIKAN UTAMA: MODAL POPUP JIKA OPERASI BACKEND ERROR (JUDUL SEKARANG DINAMIS) --}}
+{{-- POPUP MODAL ERROR --}}
 @if(session('error'))
 <div class="modal-overlay active" id="alertModalError" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
     <div class="modal-content alert-modal" style="background: #fff; padding: 30px; border-radius: 12px; width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
         <div class="alert-icon error" style="background: #FEE2E2; color: #EF4444; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; font-weight: bold;">&times;</div>
-        
-        {{-- Mengecek jika isi error mengandung kata 'akses' atau 'ditolak', ganti judul secara dinamis --}}
         @if(str_contains(strtolower(session('error')), 'akses') || str_contains(strtolower(session('error')), 'ditolak'))
             <h2 style="font-size: 20px; font-weight: 700; color: #0F172A; margin-bottom: 8px;">Akses Ditolak!</h2>
         @else
             <h2 style="font-size: 20px; font-weight: 700; color: #0F172A; margin-bottom: 8px;">Transaksi Gagal!</h2>
         @endif
-        
         <p style="font-size: 14px; color: #64748B; margin-bottom: 24px; line-height: 1.5;">{{ session('error') }}</p>
         <button type="button" class="btn-blue" onclick="document.getElementById('alertModalError').remove()" style="width: 100%; background: #2563EB; color: #fff; height: 44px; border: none; border-radius: 8px; font-weight: 600;">Tutup</button>
     </div>
 </div>
 @endif
 
-{{-- MODAL POPUP JIKA OPERASI BACKEND SUKSES --}}
+{{-- POPUP MODAL SUKSES --}}
 @if(session('success'))
 <div class="modal-overlay active" id="alertModalSuccess" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
     <div class="modal-content alert-modal" style="background: #fff; padding: 30px; border-radius: 12px; width: 400px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -212,6 +223,22 @@
 <script>
     const draftsData = @json($drafts);
     let cartIndex = 0;
+
+    function toggleMetodePembayaran() {
+        const metode = document.getElementById('formMetode').value;
+        const rowNominalBayar = document.getElementById('rowNominalBayar');
+        const rowKembalian = document.getElementById('rowKembalian');
+        const inputNominal = document.getElementById('inputNominal');
+
+        if (metode === 'Tunai') {
+            rowNominalBayar.style.display = 'flex';
+            rowKembalian.style.display = 'flex';
+        } else {
+            rowNominalBayar.style.display = 'none';
+            rowKembalian.style.display = 'none';
+            inputNominal.value = '';
+        }
+    }
 
     function toggleTransactionPanel() {
         const layout = document.getElementById('kasirLayout');
@@ -237,8 +264,11 @@
         if(draft) {
             document.getElementById('formTransaksiId').value = draft.id;
             document.getElementById('formJenisMotor').value = draft.jenis_motor || '';
+            document.getElementById('formNomorKendaraan').value = draft.nomor_kendaraan || '';
             document.getElementById('formMetode').value = draft.metode_pembayaran || 'Tunai';
             document.getElementById('formBiayaJasa').value = draft.biaya_jasa_servis || '';
+
+            toggleMetodePembayaran();
 
             if(draft.details && draft.details.length > 0) {
                 draft.details.forEach(detail => {
@@ -397,6 +427,7 @@
         document.getElementById('formTransaksiId').value = '';
         document.querySelectorAll('tr[id^="row-"]').forEach(tr => tr.remove());
         document.getElementById('emptyRow').style.display = '';
+        toggleMetodePembayaran();
         kalkulasiTotal();
     }
 

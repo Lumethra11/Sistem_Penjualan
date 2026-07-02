@@ -37,6 +37,7 @@ class KasirController extends Controller
 
     public function store(Request $request)
     {
+        // FIX: Menggunakan standard validate bawaan Request untuk menghindari BadMethodCallException
         $request->validate([
             'metode_pembayaran' => 'required',
         ]);
@@ -68,11 +69,12 @@ class KasirController extends Controller
                 $transaksi = Transaksi::findOrFail($request->transaksi_id);
                 $transaksi->update([
                     'jenis_motor' => $request->jenis_motor,
+                    'nomor_kendaraan' => $request->nomor_kendaraan, // Menjaga rekam data nomor kendaraan saat update
                     'total_harga' => $totalHarga,
                     'biaya_jasa_servis' => $biayaJasa,
                     'metode_pembayaran' => $request->metode_pembayaran,
-                    'bayar' => $bayar,               // <-- Menyimpan nominal uang masuk
-                    'kembalian' => $kembalian,       // <-- Menyimpan nominal uang kembalian
+                    'bayar' => $bayar,               // Menyimpan nominal uang masuk
+                    'kembalian' => $kembalian,       // Menyimpan nominal uang kembalian
                     'status' => $status,
                 ]);
                 
@@ -83,11 +85,12 @@ class KasirController extends Controller
                     'no_invoice' => 'INV-' . strtoupper(Str::random(5)),
                     'user_id' => Auth::id(),
                     'jenis_motor' => $request->jenis_motor,
+                    'nomor_kendaraan' => $request->nomor_kendaraan, // Menyimpan rekam data nomor kendaraan saat buat baru
                     'total_harga' => $totalHarga,
                     'biaya_jasa_servis' => $biayaJasa,
                     'metode_pembayaran' => $request->metode_pembayaran,
-                    'bayar' => $bayar,               // <-- Menyimpan nominal uang masuk
-                    'kembalian' => $kembalian,       // <-- Menyimpan nominal uang kembalian
+                    'bayar' => $bayar,               // Menyimpan nominal uang masuk
+                    'kembalian' => $kembalian,       // Menyimpan nominal uang kembalian
                     'status' => $status,
                 ]);
             }

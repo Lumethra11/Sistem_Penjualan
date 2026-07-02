@@ -36,7 +36,11 @@
                 <tr>
                     <td>{{ $item->no_invoice }}</td>
                     <td>{{ $item->created_at->format('d F Y - H:i') }}</td>
-                    <td>{{ $item->jenis_motor ?? '-' }}</td>
+                    <td>
+                        {{-- Logika menampilkan Jenis Motor dan Nomor Kendaraan di dalam kurung --}}
+                        {{ $item->jenis_motor ?? 'Motor' }} 
+                        ({{ $item->nomor_kendaraan ?? '-' }})
+                    </td>
                     <td>{{ $item->metode_pembayaran }}</td>
                     <td>Rp. {{ number_format($item->total_harga, 0, ',', '.') }}</td>
                     <td>
