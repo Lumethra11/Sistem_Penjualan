@@ -50,6 +50,8 @@ Route::middleware('auth')->group(function () {
         // Laporan
         Route::prefix('laporan')->name('laporan.')->group(function () {
             Route::get('/', [LaporanController::class, 'index'])->name('index');
+            Route::get('/export-excel', [LaporanController::class, 'exportExcel'])->name('export.excel');
+            Route::get('/export-pdf', [LaporanController::class, 'exportPdf'])->name('export.pdf');
         });
 
         // Kelola User

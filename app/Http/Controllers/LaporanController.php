@@ -9,18 +9,19 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class LaporanController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Fungsi privat untuk mengambil data laporan berdasarkan filter request.
+     * Konsisten digunakan oleh index, exportExcel, dan exportPdf (DRY Principle).
+     */
+    private function getLaporanData(Request $request)
     {
         $user = Auth::user();
         $adminId = $user->role === 'admin' ? $user->id : $user->admin_id;
 
-        // Dropdown filter kasir konsisten
-        $daftarKasir = User::where('admin_id', $adminId)->get();
-
-        // Tangkap request filter URL
         $jenisLaporan = $request->input('jenis_laporan', 'penjualan');
         $tglMulai = $request->input('tgl_mulai');
         $tglSelesai = $request->input('tgl_selesai');
@@ -29,9 +30,7 @@ class LaporanController extends Controller
 
         $results = collect();
 
-        // =========================================================================
-        // 1. DESAIN LOGIKA: LAPORAN PENJUALAN KESELURUHAN
-        // =========================================================================
+        // 1. LOGIKA: LAPORAN PENJUALAN KESELURUHAN
         if ($jenisLaporan === 'penjualan') {
             $query = DetailTransaksi::with(['transaksi.user', 'barang'])
                 ->whereHas('transaksi', function($q) use ($adminId, $tglMulai, $tglSelesai, $kasirId) {
@@ -47,13 +46,12 @@ class LaporanController extends Controller
 
             $dataDetail = $query->get();
 
-            // Transformasi data menggunakan Accessor Pintar Model yang baru kita buat
             $results = $dataDetail->map(function($item) {
                 return (object) [
                     'tanggal'   => $item->transaksi->created_at,
                     'invoice'   => $item->transaksi->no_invoice,
-                    'kode'      => $item->kode_produk, // Mengambil properti virtual model
-                    'nama'      => $item->nama_produk, // Mengambil properti virtual model
+                    'kode'      => $item->kode_produk, 
+                    'nama'      => $item->nama_produk, 
                     'qty'       => $item->jumlah,
                     'harga'     => $item->harga_jual_satuan,
                     'total'     => $item->subtotal,
@@ -62,9 +60,7 @@ class LaporanController extends Controller
             });
         } 
         
-        // =========================================================================
-        // 2. DESAIN LOGIKA: LAPORAN BARANG MASUK (GABUNGAN PENDAFTARAN & HISTORI)
-        // =========================================================================
+        // 2. LOGIKA: LAPORAN BARANG MASUK
         elseif ($jenisLaporan === 'barang_masuk') {
             // Sumber A: Dari mutasi pencatatan histori_stok
             $queryHistori = DB::table('histori_stok')
@@ -101,36 +97,55 @@ class LaporanController extends Controller
                 DB::raw('"Admin (Awal)" as operator')
             )->get();
 
-            // Dimerge menjadi satu koleksi data utuh agar 20+ data barang masuk Anda tampil sempurna
             $results = $resultsHistori->merge($resultsBarang)->sortByDesc('tanggal')->values();
-        } 
-        
-        // =========================================================================
-        // 3. DESAIN LOGIKA: LAPORAN BARANG KELUAR
-        // =========================================================================
-        else {
-            $query = DB::table('histori_stok')
-                ->join('barang', 'histori_stok.barang_id', '=', 'barang.id')
-                ->leftJoin('detail_transaksi', 'barang.id', '=', 'detail_transaksi.barang_id')
-                ->leftJoin('transaksi', 'detail_transaksi.transaksi_id', '=', 'transaksi.id')
-                ->leftJoin('users', 'transaksi.user_id', '=', 'users.id')
-                ->where('histori_stok.jenis_pergerakan', 'keluar');
-
-            if ($tglMulai) { $query->whereDate('histori_stok.created_at', '>=', $tglMulai); }
-            if ($tglSelesai) { $query->whereDate('histori_stok.created_at', '<=', $tglSelesai); }
-            if ($kasirId) { $query->where('transaksi.user_id', $kasirId); }
-
-            $results = $query->select(
-                'histori_stok.created_at as tanggal',
-                'barang.kode_barang as kode',
-                'barang.nama_barang as nama',
-                'histori_stok.jumlah as qty',
-                'barang.harga_jual as harga',
-                DB::raw('(histori_stok.jumlah * barang.harga_jual) as total'),
-                DB::raw('COALESCE(users.name, "Sistem") as operator')
-            )->orderBy('histori_stok.created_at', 'desc')->distinct()->get();
         }
 
+        return $results;
+    }
+
+    public function index(Request $request)
+    {
+        $user = Auth::user();
+        $adminId = $user->role === 'admin' ? $user->id : $user->admin_id;
+
+        $daftarKasir = User::where('admin_id', $adminId)->get();
+
+        $jenisLaporan = $request->input('jenis_laporan', 'penjualan');
+        $tglMulai = $request->input('tgl_mulai');
+        $tglSelesai = $request->input('tgl_selesai');
+        $tipeBarang = $request->input('tipe_barang', 'all'); 
+        $kasirId = $request->input('kasir_id');
+
+        $results = $this->getLaporanData($request);
+
         return view('laporan.index', compact('results', 'daftarKasir', 'jenisLaporan', 'tglMulai', 'tglSelesai', 'tipeBarang', 'kasirId'));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $jenisLaporan = $request->input('jenis_laporan', 'penjualan');
+        $results = $this->getLaporanData($request);
+        $filename = "Laporan_" . $jenisLaporan . "_" . date('YmdHis') . ".xls";
+
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        return view('laporan.export_excel', compact('results', 'jenisLaporan'));
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $jenisLaporan = $request->input('jenis_laporan', 'penjualan');
+        $results = $this->getLaporanData($request);
+        
+        // Memuat template blade dan merendernya menjadi file PDF biner mentah
+        $pdf = Pdf::loadView('laporan.export_pdf', compact('results', 'jenisLaporan'));
+        
+        $filename = "Laporan_" . $jenisLaporan . "_" . date('YmdHis') . ".pdf";
+        
+        // Memaksa browser untuk mengunduh berkas secara langsung
+        return $pdf->download($filename);
     }
 }
