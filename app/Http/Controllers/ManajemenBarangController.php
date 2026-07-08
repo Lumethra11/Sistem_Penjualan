@@ -26,7 +26,7 @@ class ManajemenBarangController extends Controller
             });
         }
 
-        $barang = $query->paginate(20)->appends($request->all());
+        $barang = $query->paginate(5)->appends($request->all());
 
         return view('manajemenbarang.databarang', compact('barang', 'search', 'tipe'));
     }
@@ -265,11 +265,20 @@ class ManajemenBarangController extends Controller
             'file' => 'required|mimes:xlsx,xls'
         ]);
 
-        Excel::import(new BarangImport, $request->file('file'));
+        try {
+            // Bungkus proses import ke dalam try-catch
+            Excel::import(new BarangImport, $request->file('file'));
 
-        return redirect()
-            ->route('manajemenbarang.databarang')
-            ->with('success', 'Import barang berhasil');
+            return redirect()
+                ->route('manajemenbarang.databarang', ['tipe' => 'stok'])
+                ->with('success', 'Import data barang berhasil!');
+
+        } catch (\Exception $e) {
+            // Jika file excel kosong/error, tangkap pesannya dan kirim sebagai alert error ke view
+            return redirect()
+                ->back()
+                ->with('error', 'Gagal Import: ' . $e->getMessage());
+        }
     }
 
     public function downloadTemplate()

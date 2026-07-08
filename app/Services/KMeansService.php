@@ -31,17 +31,31 @@ class KMeansService
         }
 
         $dataset = [];
+        $maxStok = 1; $minStok = INF;
+        $maxTerjual = 1; $minTerjual = INF;
+
+        // Langkah 1: Bangun dataset & cari nilai Min-Max untuk normalisasi
         foreach ($barangList as $b) {
             $terjualCount = isset($penjualan[$b->id]) ? (int)$penjualan[$b->id] : 0;
-            
+            $stokCount = (int)$b->stok;
+
+            if ($stokCount > $maxStok) $maxStok = $stokCount;
+            if ($stokCount < $minStok) $minStok = $stokCount;
+            if ($terjualCount > $maxTerjual) $maxTerjual = $terjualCount;
+            if ($terjualCount < $minTerjual) $minTerjual = $terjualCount;
+
             $dataset[] = [
                 'id_barang'   => $b->id,
                 'kode_barang' => $b->kode_barang,
                 'nama_barang' => $b->nama_barang,
-                'stok'        => (int)$b->stok,
+                'stok'        => $stokCount,
                 'terjual'     => $terjualCount
             ];
         }
+
+        // Antisipasi jika semua nilai stok atau terjual sama (menghindari pembagian dengan nol)
+        $rangeStok = ($maxStok - $minStok) == 0 ? 1 : ($maxStok - $minStok);
+        $rangeTerjual = ($maxTerjual - $minTerjual) == 0 ? 1 : ($maxTerjual - $minTerjual);
 
         if (count($dataset) < 3) {
             return collect($dataset)->map(function($item) {
@@ -50,31 +64,45 @@ class KMeansService
             });
         }
 
+        // Langkah 2: Tentukan Centroid Awal berdasarkan urutan data terjual (seperti Excel Anda)
         $sortedSales = collect($dataset)->sortBy('terjual')->values()->toArray();
         $count = count($sortedSales);
 
-        $centroids = [
-            'Laris'        => ['terjual' => $sortedSales[$count - 1]['terjual'], 'stok' => $sortedSales[$count - 1]['stok']],
-            'Sedang'       => ['terjual' => $sortedSales[floor($count / 2)]['terjual'], 'stok' => $sortedSales[floor($count / 2)]['stok']],
-            'Kurang Laris' => ['terjual' => $sortedSales[0]['terjual'], 'stok' => $sortedSales[0]['stok']]
+        $rawCentroids = [
+            'Laris'        => $sortedSales[$count - 1],
+            'Sedang'       => $sortedSales[floor($count / 2)],
+            'Kurang Laris' => $sortedSales[0]
         ];
+
+        // Lakukan normalisasi pada Centroid Awal
+        $centroids = [];
+        foreach ($rawCentroids as $label => $c) {
+            $centroids[$label] = [
+                'stok'    => ($c['stok'] - $minStok) / $rangeStok,
+                'terjual' => ($c['terjual'] - $minTerjual) / $rangeTerjual
+            ];
+        }
 
         $assignments = [];
 
+        // Langkah 3: Iterasi K-Means
         for ($iter = 0; $iter < $maxIterations; $iter++) {
             $newGroups = ['Laris' => [], 'Sedang' => [], 'Kurang Laris' => []];
             $changed = false;
 
             foreach ($dataset as $data) {
+                // Normalisasikan data yang sedang dihitung jaraknya
+                $normStok = ($data['stok'] - $minStok) / $rangeStok;
+                $normTerjual = ($data['terjual'] - $minTerjual) / $rangeTerjual;
 
                 $closestCluster = null;
                 $minDistance = INF;
 
                 foreach ($centroids as $label => $centroid) {
-
+                    // Hitung Euclidean Distance menggunakan data berskala seimbang (0 sampai 1)
                     $dist = sqrt(
-                        pow($data['terjual'] - $centroid['terjual'], 2) +
-                        pow($data['stok'] - $centroid['stok'], 2)
+                        pow($normTerjual - $centroid['terjual'], 2) +
+                        pow($normStok - $centroid['stok'], 2)
                     );
 
                     if ($dist < $minDistance) {
@@ -83,12 +111,13 @@ class KMeansService
                     }
                 }
 
-                $newGroups[$closestCluster][] = $data;
+                $newGroups[$closestCluster][] = [
+                    'stok'    => $normStok,
+                    'terjual' => $normTerjual,
+                    'raw'     => $data
+                ];
 
-                if (
-                    !isset($assignments[$data['kode_barang']]) ||
-                    $assignments[$data['kode_barang']] !== $closestCluster
-                ) {
+                if (!isset($assignments[$data['kode_barang']]) || $assignments[$data['kode_barang']] !== $closestCluster) {
                     $assignments[$data['kode_barang']] = $closestCluster;
                     $changed = true;
                 }
@@ -98,6 +127,7 @@ class KMeansService
                 break;
             }
 
+            // Hitung ulang posisi Centroid (Mencari rata-rata baru dari data ter-normalisasi)
             foreach ($newGroups as $label => $items) {
                 if (count($items) > 0) {
                     $sumTerjual = 0;
@@ -114,13 +144,10 @@ class KMeansService
             }
         }
 
+        // Langkah 4: Kembalikan format data asli beserta label klasternya
         return collect($dataset)->map(function($item) use ($assignments) {
-
-            $item['label_cluster'] =
-                $assignments[$item['kode_barang']] ?? 'Kurang Laris';
-
+            $item['label_cluster'] = $assignments[$item['kode_barang']] ?? 'Kurang Laris';
             return (object)$item;
-
         })->values();
     }
 
@@ -153,7 +180,7 @@ class KMeansService
                 'label_cluster'   => $res->label_cluster,
             ]);
 
-            // 2. Tentukan Konten Notifikasi Berdasarkan Kategori Cluster & Aturan Bisnis
+            // 2. Tentukan Konten Notifikasi Berdasarkan Kategori Cluster
             if ($res->label_cluster === 'Laris') {
                 $judulNotif = 'Rekomendasi Tambah Stok';
                 $pesanNotif = "Suku cadang {$res->nama_barang} ({$res->kode_barang}) teridentifikasi Laris dengan total {$res->terjual} unit penjualan. Disarankan segera melakukan penambahan stok.";
@@ -173,7 +200,7 @@ class KMeansService
                 continue;
             }
 
-            // 3. Simpan ke Tabel Notifikasi Menggunakan Skema Kolom Asli Anda (judul, pesan)
+            // 3. Simpan ke Tabel Notifikasi
             DB::table('notifikasi')->updateOrInsert(
                 ['id_item' => $tipeNotif . '_' . $res->kode_barang . '_' . $periodeKey],
                 [

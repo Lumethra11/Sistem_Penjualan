@@ -8,7 +8,7 @@
     <div class="top-bar-dashboard">
         <div class="back-nav-title-group">
             <a href="{{ route('dashboard') }}" class="btn-back-dashboard"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
-            <h1>Ranking Penjualan Suku Cadang</h1>
+            <h1>Ranking Penjualan</h1>
         </div>
     </div>
 

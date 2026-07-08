@@ -35,6 +35,7 @@
         <table>
             <thead>
                 <tr>
+                    <th style="width: 60px; text-align: center;">No</th>
                     <th>Kode</th>
                     <th>Nama Barang</th>
                     <th>Kategori</th>
@@ -49,6 +50,9 @@
             <tbody>
                 @forelse($barang as $item)
                 <tr>
+                    <td style="text-align: center; font-weight: 600; color: #64748B;">
+                        {{ ($barang->currentPage() - 1) * $barang->perPage() + $loop->iteration }}
+                    </td>
                     <td>{{ $item->kode_barang }}</td>
                     <td>{{ $item->nama_barang }}</td>
                     <td>{{ $item->kategori }}</td>
@@ -64,7 +68,6 @@
                                     <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 </button>
                             @else
-                                {{-- BUTTON PINDAH SUDAH BERBENTUK ICON SVG (MIGRATE ICON) --}}
                                 <form action="/manajemenbarang/{{ $item->id }}/pindah" method="POST" class="inline-form">
                                     @csrf
                                     <button type="submit" class="btn-icon move" title="Pindahkan ke tipe Stok">
@@ -88,7 +91,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="text-muted-empty">Data barang tidak ditemukan.</td>
+                    <td colspan="10" class="text-muted-empty">Data barang tidak ditemukan.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -214,7 +217,9 @@
         document.getElementById('edit_supplier').value = data.supplier || '';
     }
 
-    function closeEditModal() { document.getElementById('editModal').remove('active'); }
+    function closeEditModal() { 
+        document.getElementById('editModal').classList.remove('active'); 
+    }
 
     let formToDelete = null;
     function confirmDelete(e, form) {
