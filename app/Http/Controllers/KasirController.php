@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,35 +13,61 @@ use Illuminate\Support\Str;
 
 class KasirController extends Controller
 {
+    /**
+     * HALAMAN UTAMA TRANSAKSI KASIR
+     */
     public function index()
     {
-        // Ambil draft beserta detail dan relasi barangnya agar tidak kosong saat di-load ulang
+        $user = Auth::user();
+        // JANGKAR MULTI-TENANT: Mengunci ruang data pada ID Admin Pemilik Bengkel
+        $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
+
+        // 1. Ambil draft transaksi yang dibuat oleh kru internal bengkel ini saja
         $drafts = Transaksi::with(['details.barang'])
             ->where('status', 'draft')
+            ->whereHas('user', function($q) use ($adminId) {
+                $q->where('id', $adminId)->orWhere('admin_id', $adminId);
+            })
             ->latest()
             ->get();
 
-        $barangStok = Barang::where('tipe_barang', 'stok')->get();
-        $barangNonStok = Barang::where('tipe_barang', 'non_stok')->get();
+        // 2. Filter inventaris barang agar kasir hanya melihat stok milik bengkelnya sendiri
+        $barangStok = Barang::where('user_id', $adminId)->where('tipe_barang', 'stok')->get();
+        $barangNonStok = Barang::where('user_id', $adminId)->where('tipe_barang', 'non_stok')->get();
 
         return view('kasir.transaksi', compact('drafts', 'barangStok', 'barangNonStok'));
     }
 
+    /**
+     * HALAMAN RIWAYAT TRANSAKSI FINAL
+     */
     public function riwayat()
     {
+        $user = Auth::user();
+        $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
+
+        // Ambil riwayat selesai yang dibuat oleh internal ekosistem bengkel ini
         $riwayat = Transaksi::where('status', 'selesai')
+            ->whereHas('user', function($q) use ($adminId) {
+                $q->where('id', $adminId)->orWhere('admin_id', $adminId);
+            })
             ->latest()
             ->paginate(10);
 
         return view('kasir.riwayat', compact('riwayat'));
     }
 
+    /**
+     * PROSES SIMPAN TRANSAKSI (DRAFT ATAU SELESAI FINAL)
+     */
     public function store(Request $request)
     {
-        // FIX: Menggunakan standard validate bawaan Request untuk menghindari BadMethodCallException
         $request->validate([
             'metode_pembayaran' => 'required',
         ]);
+
+        $user = Auth::user();
+        $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
 
         $status = $request->submit_type === 'selesai' ? 'selesai' : 'draft';
         $biayaJasa = $request->biaya_jasa_servis ?? 0;
@@ -52,11 +79,8 @@ class KasirController extends Controller
             // 1. HITUNG NOMINAL PEMBAYARAN DAN KEMBALIAN SECARA AMAN
             // =========================================================
             $totalHarga = $request->total_tagihan ?? 0;
-            
-            // Ambil nominal bayar dari input form jika metodenya Tunai, jika non-tunai samakan dengan total harga
             $bayar = $request->metode_pembayaran === 'Tunai' ? ($request->bayar ?? 0) : $totalHarga;
             
-            // Hitung nilai kembalian
             $kembalian = $bayar - $totalHarga;
             if ($kembalian < 0) { 
                 $kembalian = 0; 
@@ -66,31 +90,34 @@ class KasirController extends Controller
             // 2. UPDATE ATAU BUAT TRANSAKSI UTAMA (HEAD)
             // =========================================================
             if ($request->transaksi_id) {
-                $transaksi = Transaksi::findOrFail($request->transaksi_id);
+                // Cari transaksi, pastikan transaksi tersebut milik kru bengkel ini (mencegah SQL injection silang)
+                $transaksi = Transaksi::whereHas('user', function($q) use ($adminId) {
+                        $q->where('id', $adminId)->orWhere('admin_id', $adminId);
+                    })->findOrFail($request->transaksi_id);
+
                 $transaksi->update([
                     'jenis_motor' => $request->jenis_motor,
-                    'nomor_kendaraan' => $request->nomor_kendaraan, // Menjaga rekam data nomor kendaraan saat update
+                    'nomor_kendaraan' => $request->nomor_kendaraan,
                     'total_harga' => $totalHarga,
                     'biaya_jasa_servis' => $biayaJasa,
                     'metode_pembayaran' => $request->metode_pembayaran,
-                    'bayar' => $bayar,               // Menyimpan nominal uang masuk
-                    'kembalian' => $kembalian,       // Menyimpan nominal uang kembalian
+                    'bayar' => $bayar,
+                    'kembalian' => $kembalian,
                     'status' => $status,
                 ]);
                 
-                // Hapus detail lama, kita input ulang dari data form terbaru yang dikirim
                 $transaksi->details()->delete();
             } else {
                 $transaksi = Transaksi::create([
                     'no_invoice' => 'INV-' . strtoupper(Str::random(5)),
-                    'user_id' => Auth::id(),
+                    'user_id' => $user->id, // Pencatat tetap ID akun asli (Kasir/Admin yang bertugas)
                     'jenis_motor' => $request->jenis_motor,
-                    'nomor_kendaraan' => $request->nomor_kendaraan, // Menyimpan rekam data nomor kendaraan saat buat baru
+                    'nomor_kendaraan' => $request->nomor_kendaraan,
                     'total_harga' => $totalHarga,
                     'biaya_jasa_servis' => $biayaJasa,
                     'metode_pembayaran' => $request->metode_pembayaran,
-                    'bayar' => $bayar,               // Menyimpan nominal uang masuk
-                    'kembalian' => $kembalian,       // Menyimpan nominal uang kembalian
+                    'bayar' => $bayar,
+                    'kembalian' => $kembalian,
                     'status' => $status,
                 ]);
             }
@@ -106,35 +133,39 @@ class KasirController extends Controller
                     $hargaJual = $item['harga'] ?? 0;
                     $qty = intval($item['qty']);
 
-                    // EKSEKUSI JIKA TRANSAKSI "CETAK" (SELESAI FINAL)
                     if ($status === 'selesai') {
                         
-                        // JIKA BARANG MANUAL (Belum ada barang_id dari database)
+                        // JIKA BARANG MANUAL (Belum ada di DB, Kasir ketik teks bebas)
                         if (empty($barangId) && !empty($namaBarang)) {
-                            // Bersihkan penanda teks satuan hasil render javascript jika terbawa
                             $namaClean = preg_replace('/ \([^)]+\)$/', '', $namaBarang);
 
-                            // Cek apakah data manual ini sebenarnya sudah terdaftar sebelumnya di master Non-Stok
-                            $barangEksis = Barang::where('nama_barang', $namaClean)
-                                                 ->where('tipe_barang', 'non_stok')
-                                                 ->first();
+                            // Cek apakah produk manual ini sudah pernah didaftarkan sebelumnya DI BENGKEL INI
+                            $barangEksis = Barang::where('user_id', $adminId)
+                                ->where('nama_barang', $namaClean)
+                                ->where('tipe_barang', 'non_stok')
+                                ->first();
 
                             if ($barangEksis) {
                                 $barangId = $barangEksis->id;
                             } else {
-                                // Fallback Otomatis Kategori & Supplier ke Master Non-Stok
                                 $kategoriManual = 'Manual Kasir';
                                 $supplierManual = !empty($item['supplier']) ? $item['supplier'] : 'Input Manual Kasir';
 
-                                // Generate Kode Barang Otomatis berdasar Kategori Manual Kasir (MAN)
+                                // Generate urutan kode barang non-stok terisolasi khusus bengkel ini
                                 $cleanKategori = preg_replace('/[^A-Za-z]/', '', $kategoriManual);
-                                $prefix = strtoupper(substr($cleanKategori, 0, 3)); // Hasil: MAN
-                                $lastBarang = Barang::where('kode_barang', 'like', $prefix . '%')->orderBy('kode_barang', 'desc')->first();
+                                $prefix = strtoupper(substr($cleanKategori, 0, 3)); // MAN
+                                
+                                $lastBarang = Barang::where('user_id', $adminId)
+                                    ->where('kode_barang', 'like', $prefix . '%')
+                                    ->orderBy('kode_barang', 'desc')
+                                    ->first();
+                                    
                                 $newNumber = $lastBarang ? intval(substr($lastBarang->kode_barang, 3)) + 1 : 1;
                                 $kodeBarang = $prefix . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
 
-                                // Daftarkan langsung menjadi barang baru di data non_stok (Stok awal = 0)
+                                // Kunci barang baru non-stok ini dengan user_id milik ADMIN pemilik bengkel
                                 $barangBaru = Barang::create([
+                                    'user_id'     => $adminId, 
                                     'kode_barang' => $kodeBarang,
                                     'nama_barang' => $namaClean,
                                     'tipe_barang' => 'non_stok',
@@ -148,7 +179,7 @@ class KasirController extends Controller
 
                                 $barangId = $barangBaru->id;
 
-                                // Catat pembuatan data baru ke histori_stok dengan volume 0
+                                // Catat log pendaftaran awal barang non-stok
                                 DB::table('histori_stok')->insert([
                                     'barang_id' => $barangId,
                                     'jenis_pergerakan' => 'masuk',
@@ -161,15 +192,15 @@ class KasirController extends Controller
                             }
                         }
 
-                        // JIKA MENGGUNAKAN BARANG DATABASE (BAIK STOK ATAU PUN SEBELUMNYA NON-STOK)
+                        // JIKA MENGGUNAKAN BARANG DATABASE BENGKEL
                         if (!empty($barangId)) {
-                            $barang = Barang::lockForUpdate()->find($barangId);
+                            // Amankan item barang: Harus terdaftar di bawah kepemilikan Bengkel ini
+                            $barang = Barang::where('user_id', $adminId)->lockForUpdate()->find($barangId);
 
                             if (!$barang) {
-                                throw new \Exception("Barang dengan ID {$barangId} tidak ditemukan.");
+                                throw new \Exception("Barang tidak ditemukan atau bukan milik otorisasi bengkel Anda.");
                             }
 
-                            // Jika bertipe stok fisik, lakukan pengecekan kuantitas sisa barang
                             if ($barang->tipe_barang === 'stok') {
                                 if ($barang->stok < $qty) {
                                     throw new \Exception("Gagal Cetak! Stok untuk '" . $barang->nama_barang . "' tidak mencukupi (Sisa: " . $barang->stok . ").");
@@ -177,11 +208,10 @@ class KasirController extends Controller
                                 $barang->decrement('stok', $qty);
                                 $sisaStokLog = $barang->stok;
                             } else {
-                                // Tipe Non-Stok dikunci di angka 0 agar tidak minus ke database master
                                 $sisaStokLog = 0;
                             }
 
-                            // Catat log pengeluaran ke histori_stok
+                            // Catat log mutasi pengeluaran stok
                             DB::table('histori_stok')->insert([
                                 'barang_id' => $barang->id,
                                 'jenis_pergerakan' => 'keluar',
@@ -197,7 +227,7 @@ class KasirController extends Controller
                     // MASUKKAN ITEM KE DETAIL TRANSAKSI
                     DetailTransaksi::create([
                         'transaksi_id' => $transaksi->id,
-                        'barang_id' => $barangId, // Bernilai null jika draft & manual
+                        'barang_id' => $barangId,
                         'nama_barang_manual' => empty($barangId) ? $namaBarang : null,
                         'harga_modal' => $hargaBeli,
                         'harga_jual_satuan' => $hargaJual,
@@ -223,9 +253,21 @@ class KasirController extends Controller
         }
     }
 
+    /**
+     * TAMPILAN NOTA STRUK KASIR
+     */
     public function nota($id)
     {
-        $transaksi = Transaksi::with('details')->findOrFail($id);
+        $user = Auth::user();
+        $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
+
+        // Validasi Otoritas Nota: Ambil nota jika dibuat oleh kru bengkel internal ini saja
+        $transaksi = Transaksi::with('details')
+            ->whereHas('user', function($q) use ($adminId) {
+                $q->where('id', $adminId)->orWhere('admin_id', $adminId);
+            })
+            ->findOrFail($id);
+
         return view('kasir.nota', compact('transaksi'));
     }
 }

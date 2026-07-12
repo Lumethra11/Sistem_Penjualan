@@ -9,6 +9,7 @@ class Barang extends Model
     protected $table = 'barang';
 
     protected $fillable = [
+        'user_id',
         'kode_barang',
         'nama_barang',
         'stok',
@@ -19,4 +20,9 @@ class Barang extends Model
         'supplier',
         'tipe_barang'
     ];
+
+    public function barang()
+    {
+        return $this->hasMany(Barang::class);
+    }
 }

@@ -15,12 +15,13 @@ class LaporanController extends Controller
 {
     /**
      * Fungsi privat untuk mengambil data laporan berdasarkan filter request.
-     * Konsisten digunakan oleh index, exportExcel, dan exportPdf (DRY Principle).
+     * Dikunci menggunakan relasi Tenant/Bengkel Utama (Secure Multi-tenant).
      */
     private function getLaporanData(Request $request)
     {
         $user = Auth::user();
-        $adminId = $user->role === 'admin' ? $user->id : $user->admin_id;
+        // STRATEGI JANGKAR MULTI-TENANT: Mengunci hak kepemilikan data pada ID Admin (Pemilik Bengkel)
+        $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
 
         $jenisLaporan = $request->input('jenis_laporan', 'penjualan');
         $tglMulai = $request->input('tgl_mulai');
@@ -30,17 +31,19 @@ class LaporanController extends Controller
 
         $results = collect();
 
-        // 1. LOGIKA: LAPORAN PENJUALAN KESELURUHAN
+        // 1. LOGIKA: LAPORAN PENJUALAN KESELURUHAN (Terfilter per Ruang Lingkup Bengkel)
         if ($jenisLaporan === 'penjualan') {
             $query = DetailTransaksi::with(['transaksi.user', 'barang'])
                 ->whereHas('transaksi', function($q) use ($adminId, $tglMulai, $tglSelesai, $kasirId) {
                     $q->where('status', 'selesai')
                       ->whereHas('user', function($qu) use ($adminId) {
+                          // Mengamankan transaksi: Harus milik admin ini atau kasir bawahan admin ini
                           $qu->where('id', $adminId)->orWhere('admin_id', $adminId);
                       });
 
                     if ($tglMulai) { $q->whereDate('created_at', '>=', $tglMulai); }
                     if ($tglSelesai) { $q->whereDate('created_at', '<=', $tglSelesai); }
+                    // Jika ada filter spesifik kasir dari form laporan
                     if ($kasirId) { $q->where('user_id', $kasirId); }
                 });
 
@@ -60,11 +63,15 @@ class LaporanController extends Controller
             });
         } 
         
-        // 2. LOGIKA: LAPORAN BARANG MASUK
+        // 2. LOGIKA: LAPORAN BARANG MASUK (Terfilter per Ruang Lingkup Bengkel)
         elseif ($jenisLaporan === 'barang_masuk') {
-            // Sumber A: Dari mutasi pencatatan histori_stok
+            // Ambil ID semua barang yang dimiliki oleh Bengkel (Admin) ini
+            $barangIds = Barang::where('user_id', $adminId)->pluck('id');
+
+            // Sumber A: Dari catatan mutasi histori_stok (Hanya mengambil data dari barang milik bengkel ini)
             $queryHistori = DB::table('histori_stok')
                 ->join('barang', 'histori_stok.barang_id', '=', 'barang.id')
+                ->whereIn('histori_stok.barang_id', $barangIds)
                 ->where('histori_stok.jenis_pergerakan', 'masuk');
 
             if ($tglMulai) { $queryHistori->whereDate('histori_stok.created_at', '>=', $tglMulai); }
@@ -81,8 +88,8 @@ class LaporanController extends Controller
                 DB::raw('"Sistem/Admin" as operator')
             )->get();
 
-            // Sumber B: Dari entri awal record pembuatan data di master barang
-            $queryBarang = DB::table('barang');
+            // Sumber B: Dari entri awal record pembuatan data di master barang milik bengkel ini
+            $queryBarang = DB::table('barang')->where('user_id', $adminId);
             if ($tglMulai) { $queryBarang->whereDate('created_at', '>=', $tglMulai); }
             if ($tglSelesai) { $queryBarang->whereDate('created_at', '<=', $tglSelesai); }
             if ($tipeBarang !== 'all') { $queryBarang->where('tipe_barang', $tipeBarang); }
@@ -97,17 +104,22 @@ class LaporanController extends Controller
                 DB::raw('"Admin (Awal)" as operator')
             )->get();
 
+            // Gabungkan record histori restok dengan data saldo awal pendaftaran barang
             $results = $resultsHistori->merge($resultsBarang)->sortByDesc('tanggal')->values();
         }
 
         return $results;
     }
 
+    /**
+     * TAMPILAN DASHBOARD LAPORAN
+     */
     public function index(Request $request)
     {
         $user = Auth::user();
-        $adminId = $user->role === 'admin' ? $user->id : $user->admin_id;
+        $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
 
+        // Daftar pilihan dropdown kasir dibatasi hanya yang bekerja di bawah struktur admin ini
         $daftarKasir = User::where('admin_id', $adminId)->get();
 
         $jenisLaporan = $request->input('jenis_laporan', 'penjualan');
@@ -118,9 +130,20 @@ class LaporanController extends Controller
 
         $results = $this->getLaporanData($request);
 
-        return view('laporan.index', compact('results', 'daftarKasir', 'jenisLaporan', 'tglMulai', 'tglSelesai', 'tipeBarang', 'kasirId'));
+        return view('laporan.index', compact(
+            'results', 
+            'daftarKasir', 
+            'jenisLaporan', 
+            'tglMulai', 
+            'tglSelesai', 
+            'tipeBarang', 
+            'kasirId'
+        ));
     }
 
+    /**
+     * EXPORT EXCEL VIA BROWSER STREAM
+     */
     public function exportExcel(Request $request)
     {
         $jenisLaporan = $request->input('jenis_laporan', 'penjualan');
@@ -135,17 +158,17 @@ class LaporanController extends Controller
         return view('laporan.export_excel', compact('results', 'jenisLaporan'));
     }
 
+    /**
+     * EXPORT PDF VIA DOMPDF
+     */
     public function exportPdf(Request $request)
     {
         $jenisLaporan = $request->input('jenis_laporan', 'penjualan');
         $results = $this->getLaporanData($request);
         
-        // Memuat template blade dan merendernya menjadi file PDF biner mentah
         $pdf = Pdf::loadView('laporan.export_pdf', compact('results', 'jenisLaporan'));
-        
         $filename = "Laporan_" . $jenisLaporan . "_" . date('YmdHis') . ".pdf";
         
-        // Memaksa browser untuk mengunduh berkas secara langsung
         return $pdf->download($filename);
     }
 }

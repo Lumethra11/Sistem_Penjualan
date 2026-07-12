@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use App\Models\DetailTransaksi;
-use App\Models\Notifikasi; // Diubah penuh menggunakan nama Model Anda
+use App\Models\Notifikasi;
+use App\Services\KMeansService; // Pastikan namespace ini sesuai dengan lokasi KMeansService Anda
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class NotifikasiController extends Controller
 {
@@ -19,16 +19,17 @@ class NotifikasiController extends Controller
         $now = Carbon::now();
         $stringPeriodeMingguIni = 'Minggu ' . $now->weekOfMonth . ' Bulan ' . $now->format('F Y');
 
-        // 1. Jalankan sinkronisasi / kalkulasi live ke database terlebih dahulu
+        // 1. Jalankan sinkronisasi / kalkulasi live khusus untuk bengkel user ini
         $this->generateNotifikasiKeDatabase();
 
-        // 2. Ambil data dari tabel 'notifikasi', urutkan dari yang terbaru (desc)
-        $allNotifications = Notifikasi::orderBy('created_at', 'desc')->paginate(10);
+        // 2. Ambil data dari tabel 'notifikasi', kunci berdasarkan user_id
+        $allNotifications = Notifikasi::where('user_id', auth()->id())
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         // 3. Grouping berdasarkan tanggal buatan untuk visual tabel rekap
         $groupedNotifications = [];
         foreach ($allNotifications as $item) {
-            // Contoh hasil format: "Senin, 22 Jun 2026"
             $tanggalIndo = Carbon::parse($item->created_at)->translatedFormat('l, d M Y');
             $groupedNotifications[$tanggalIndo][] = $item;
         }
@@ -48,12 +49,13 @@ class NotifikasiController extends Controller
         // 1. Jalankan sinkronisasi sebelum diambil oleh navbar floating
         $this->generateNotifikasiKeDatabase();
         
-        // 2. Ambil notifikasi yang belum dibaca (is_read = false), urutkan paling baru
-        $unreadNotifications = Notifikasi::where('is_read', false)
+        // 2. Ambil notifikasi yang belum dibaca milik user ini
+        $unreadNotifications = Notifikasi::where('user_id', auth()->id())
+            ->where('is_read', false)
             ->orderBy('created_at', 'desc')
             ->get();
             
-        // 3. Transformasikan format tanggal & jam agar informatif di dropdown melayang
+        // 3. Transformasikan format tanggal & jam agar informatif
         $formattedData = $unreadNotifications->map(function($item) {
             return [
                 'id' => $item->id,
@@ -62,7 +64,6 @@ class NotifikasiController extends Controller
                 'icon' => $item->icon,
                 'judul' => $item->judul,
                 'pesan' => $item->pesan,
-                // Mengambil waktu jam dan menit yang presisi
                 'waktu' => Carbon::parse($item->created_at)->translatedFormat('H:i') . ' WIB',
             ];
         });
@@ -79,7 +80,11 @@ class NotifikasiController extends Controller
      */
     public function markAsRead(Request $request, $id)
     {
-        $notif = Notifikasi::where('id_item', $id)->first();
+        // Pastikan mencari berdasarkan id_item DAN user_id agar tidak memanipulasi data bengkel lain
+        $notif = Notifikasi::where('user_id', auth()->id())
+            ->where('id_item', $id)
+            ->first();
+
         if ($notif) {
             $notif->update(['is_read' => true]);
             return response()->json([
@@ -94,73 +99,41 @@ class NotifikasiController extends Controller
     }
 
     /**
-     * LOGIKA ANALISIS K-MEANS & INTEGRASI SIMPAN KE DATABASE
+     * SINKRONISASI NOTIFIKASI BERBASIS HASIL K-MEANS DARI KMEANSSERVICE
      */
     private function generateNotifikasiKeDatabase()
     {
+        $user = auth()->user();
+        $userId = $user->id;
+        
+        // Aturan multi-tenant: Jika kasir yang mengakses, jangkar data ditarik ke admin pembuatnya
+        $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
+        
         $start = Carbon::now()->startOfWeek(Carbon::MONDAY);
         $end = Carbon::now()->endOfWeek(Carbon::SUNDAY);
         $periodeKey = $start->format('Ymd'); // Token penanda kode minggu berjalan
         
-        $semuaBarang = Barang::where('tipe_barang', 'stok')->get();
-        $dataset = [];
+        /**
+         * REFAKTORISASI UTAMA: Menggunakan KMeansService Terpusat
+         * Mengambil hasil kalkulasi terpusat yang sudah include normalisasi & standarisasi
+         */
+        $dataset = app(KMeansService::class)->calculateKMeansRealtime($start, $end);
 
-        foreach ($semuaBarang as $b) {
-            $totalTerjual = DetailTransaksi::where('barang_id', $b->id)
-                ->whereHas('transaksi', function($q) use ($start, $end) {
-                    $q->where('status', 'selesai')->whereBetween('created_at', [$start, $end]);
-                })->sum('jumlah');
-
-            $dataset[] = [
-                'kode' => $b->kode_barang,
-                'nama' => $b->nama_barang,
-                'stok' => (int)$b->stok,
-                'terjual' => (int)$totalTerjual,
-                'label' => 'Sedang'
-            ];
-        }
-
-        // Jalankan Algoritma K-Means jika ragam suku cadang memadai (K=3)
-        if (count($dataset) >= 3) {
-            $stokVals = array_column($dataset, 'stok');
-            $jualVals = array_column($dataset, 'terjual');
-            $centroids = [
-                'Laris' => ['stok' => min($stokVals), 'terjual' => max($jualVals)],
-                'Sedang' => ['stok' => array_sum($stokVals)/count($stokVals), 'terjual' => array_sum($jualVals)/count($jualVals)],
-                'Kurang Laris' => ['stok' => max($stokVals), 'terjual' => min($jualVals)]
-            ];
-
-            for ($i = 0; $i < 10; $i++) {
-                $clusterBaru = ['Laris' => [], 'Sedang' => [], 'Kurang Laris' => []];
-                foreach ($dataset as $idx => $data) {
-                    $jarakLaris  = sqrt(pow($data['stok'] - $centroids['Laris']['stok'], 2) + pow($data['terjual'] - $centroids['Laris']['terjual'], 2));
-                    $jarakSedang = sqrt(pow($data['stok'] - $centroids['Sedang']['stok'], 2) + pow($data['terjual'] - $centroids['Sedang']['terjual'], 2));
-                    $jarakKurang = sqrt(pow($data['stok'] - $centroids['Kurang Laris']['stok'], 2) + pow($data['terjual'] - $centroids['Kurang Laris']['terjual'], 2));
-                    $minJarak = min($jarakLaris, $jarakSedang, $jarakKurang);
-                    
-                    $label = ($minJarak == $jarakLaris) ? 'Laris' : (($minJarak == $jarakSedang) ? 'Sedang' : 'Kurang Laris');
-                    if ($data['terjual'] === 0) { $label = 'Kurang Laris'; }
-
-                    $dataset[$idx]['label'] = $label;
-                    $clusterBaru[$label][] = $data;
-                }
-                $centroidsLama = $centroids;
-                foreach (['Laris', 'Sedang', 'Kurang Laris'] as $l) {
-                    if (count($clusterBaru[$l]) > 0) {
-                        $centroids[$l]['stok'] = array_sum(array_column($clusterBaru[$l], 'stok')) / count($clusterBaru[$l]);
-                        $centroids[$l]['terjual'] = array_sum(array_column($clusterBaru[$l], 'terjual')) / count($clusterBaru[$l]);
-                    }
-                }
-                if ($centroidsLama == $centroids) { break; }
-            }
+        // Jika dataset kosong atau tidak memenuhi syarat minimum klasterisasi di service
+        if (empty($dataset)) {
+            return;
         }
 
         // Eksekusi penyimpanan data terstruktur ke dalam tabel 'notifikasi'
         foreach ($dataset as $item) {
-            // 1. Kondisi Stok Kritis / Habis (Top-up Alert)
+            
+            // 1. Kondisi Stok Kritis / Habis (Batas operasional aman gudang)
             if ($item['stok'] <= 5) {
                 Notifikasi::updateOrCreate(
-                    ['id_item' => 'stok_' . $item['kode'] . '_' . $periodeKey],
+                    [
+                        'user_id' => $userId,
+                        'id_item' => 'stok_' . $userId . '_' . $item['kode'] . '_' . $periodeKey
+                    ],
                     [
                         'tipe' => 'stok-out',
                         'icon' => 'fa-triangle-exclamation',
@@ -170,10 +143,13 @@ class NotifikasiController extends Controller
                 );
             }
             
-            // 2. Kondisi Hasil Cluster Laris (Rekomendasi Restock Berbasis K-Means)
+            // 2. Kondisi Hasil Cluster Laris (Rekomendasi Restock Berbasis K-Means Sentral)
             if ($item['label'] === 'Laris') {
                 Notifikasi::updateOrCreate(
-                    ['id_item' => 'restock_' . $item['kode'] . '_' . $periodeKey],
+                    [
+                        'user_id' => $userId,
+                        'id_item' => 'restock_' . $userId . '_' . $item['kode'] . '_' . $periodeKey
+                    ],
                     [
                         'tipe' => 'restock',
                         'icon' => 'fa-boxes-packing',
@@ -183,10 +159,13 @@ class NotifikasiController extends Controller
                 );
             }
             
-            // 3. Kondisi Stok Mengendap / Overstock (Barang Macet)
+            // 3. Kondisi Stok Mengendap / Overstock (Barang Macet di Gudang)
             if ($item['label'] === 'Kurang Laris' && $item['terjual'] === 0 && $item['stok'] >= 30) {
                 Notifikasi::updateOrCreate(
-                    ['id_item' => 'overstock_' . $item['kode'] . '_' . $periodeKey],
+                    [
+                        'user_id' => $userId,
+                        'id_item' => 'overstock_' . $userId . '_' . $item['kode'] . '_' . $periodeKey
+                    ],
                     [
                         'tipe' => 'overstock',
                         'icon' => 'fa-layer-group',
@@ -196,10 +175,13 @@ class NotifikasiController extends Controller
                 );
             }
             
-            // 4. Kondisi Hasil Cluster Kurang Laris Terjual Sedikit (Low Sales)
+            // 4. Kondisi Hasil Cluster Kurang Laris Terjual Sedikit (Low Sales Evaluation)
             if ($item['label'] === 'Kurang Laris' && $item['terjual'] > 0) {
                 Notifikasi::updateOrCreate(
-                    ['id_item' => 'low-sales_' . $item['kode'] . '_' . $periodeKey],
+                    [
+                        'user_id' => $userId,
+                        'id_item' => 'low-sales_' . $userId . '_' . $item['kode'] . '_' . $periodeKey
+                    ],
                     [
                         'tipe' => 'low-sales',
                         'icon' => 'fa-arrow-trend-down',

@@ -17,6 +17,7 @@ class RiwayatClustering extends Model
 
     // Daftarkan kolom yang boleh diisi (Mass Assignment)
     protected $fillable = [
+        'user_id',
         'tanggal_proses',
         'periode',
         'kode_barang',
@@ -24,6 +25,11 @@ class RiwayatClustering extends Model
         'nilai_y_terjual',
         'label_cluster'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     // Relasi balik (BelongsTo) ke tabel Barang
     public function barang()

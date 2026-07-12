@@ -36,6 +36,11 @@ class User extends Authenticatable
     |--------------------------------------------------------------------------
     */
 
+    public function barang()
+    {
+        return $this->hasMany(Barang::class);
+    }
+
     // Kasir -> Admin
     public function admin()
     {

@@ -12,6 +12,7 @@ class Notifikasi extends Model
     protected $table = 'notifikasi';
 
     protected $fillable = [
+        'user_id',
         'id_item',
         'tipe',
         'icon',
@@ -19,4 +20,9 @@ class Notifikasi extends Model
         'pesan',
         'is_read'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

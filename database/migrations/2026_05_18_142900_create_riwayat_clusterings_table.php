@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('riwayat_clustering', function (Blueprint $table) {
             $table->id('id_riwayat');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->date('tanggal_proses');
             $table->string('periode');
             $table->string('kode_barang');

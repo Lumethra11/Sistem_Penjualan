@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('transaksi', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('no_invoice')->unique();
-            $table->foreignId('user_id')->constrained('users');
             $table->string('jenis_motor')->nullable();
             $table->string('nomor_kendaraan')->nullable();
             $table->integer('biaya_jasa_servis')->default(0);

@@ -13,8 +13,7 @@ class BarangImport implements ToCollection
         // 1. Hapus baris header (indeks 0)
         unset($rows[0]); 
 
-        // 2. KUNCI UTAMA: Cek apakah setelah header dihapus, datanya benar-benar kosong
-        // Jika kosong, lempar Exception agar ditangkap oleh block catch() di Controller
+        // 2. Cek apakah setelah header dihapus, datanya benar-benar kosong
         if ($rows->isEmpty() || $rows->filter(function($row) { return !empty($row[0]); })->isEmpty()) {
             throw new \Exception('File Excel kosong atau tidak berisi data barang yang valid.');
         }
@@ -38,14 +37,16 @@ class BarangImport implements ToCollection
                 continue;
             }
 
-            // Format tipe barang: ubah ke lowercase, ganti spasi/- menjadi underscore
+            // Format tipe barang
             $tipeRaw    = strtolower(trim($row[7] ?? 'stok'));
             $tipeBarang = ($tipeRaw === 'non-stok' || $tipeRaw === 'non_stok' || $tipeRaw === 'non stok') ? 'non_stok' : 'stok';
 
             $prefix = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $kategori), 0, 3));
-            $prefix = str_pad($prefix, 3, 'X'); // Jaga-jaga jika kategori kurang dari 3 huruf
+            $prefix = str_pad($prefix, 3, 'X'); 
 
-            $lastBarang = Barang::where('kode_barang', 'like', $prefix . '%')
+            // FIX 1: Cari kode barang terakhir HANYA milik user/bengkel yang sedang login
+            $lastBarang = Barang::where('user_id', auth()->id())
+                ->where('kode_barang', 'like', $prefix . '%')
                 ->orderBy('kode_barang', 'desc')
                 ->first();
 
@@ -58,7 +59,9 @@ class BarangImport implements ToCollection
 
             $kodeBarang = $prefix . $newNumber;
 
+            // FIX 2: Masukkan user_id ke dalam array creation data
             Barang::create([
+                'user_id'     => auth()->id(), // Mengunci kepemilikan data barang
                 'kode_barang' => $kodeBarang,
                 'nama_barang' => $namaBarang,
                 'tipe_barang' => $tipeBarang,

@@ -10,13 +10,16 @@ use Illuminate\Support\Facades\DB;
 
 class ManajemenBarangController extends Controller
 {
-    // DATA BARANG + SEARCH + FILTER TIPE + PAGINATION
+    // DATA BARANG + SEARCH + FILTER TIPE + PAGINATION (Scoped to User)
     public function dataBarang(Request $request)
     {
         $search = $request->input('search');
         $tipe = $request->input('tipe', 'stok'); 
         
-        $query = Barang::where('tipe_barang', $tipe)->latest();
+        // Mengunci query hanya untuk data milik user yang sedang login
+        $query = Barang::where('user_id', auth()->id())
+            ->where('tipe_barang', $tipe)
+            ->latest();
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -37,7 +40,7 @@ class ManajemenBarangController extends Controller
         return view('manajemenbarang.formbarang');
     }
 
-    // API PENCARIAN REKOMENDASI AUTOCOMPLETE
+    // API PENCARIAN REKOMENDASI AUTOCOMPLETE (Scoped to User)
     public function cariRekomendasi(Request $request)
     {
         $term = $request->input('term');
@@ -46,22 +49,25 @@ class ManajemenBarangController extends Controller
             return response()->json([]);
         }
 
-        // Mengambil data barang yang mirip dengan inputan kasir/admin
-        $barang = Barang::where('nama_barang', 'like', '%' . $term . '%')
+        // Hanya merekomendasikan barang milik bengkel user tersebut
+        $barang = Barang::where('user_id', auth()->id())
+            ->where('nama_barang', 'like', '%' . $term . '%')
             ->limit(10)
             ->get(['id', 'nama_barang', 'tipe_barang', 'satuan', 'harga_beli', 'harga_jual', 'kategori', 'supplier']);
 
         return response()->json($barang);
     }
 
-    // GENERATE KODE BARANG
+    // GENERATE KODE BARANG (Scoped to User)
     private function generateKodeBarang($kategori)
     {
         $cleanKategori = preg_replace('/[^A-Za-z]/', '', $kategori);
         $prefix = strtoupper(substr($cleanKategori, 0, 3));
         $prefix = str_pad($prefix, 3, 'X');
 
-        $lastBarang = Barang::where('kode_barang', 'like', $prefix . '%')
+        // Menghindari bentrokan counter urutan dengan bengkel lain
+        $lastBarang = Barang::where('user_id', auth()->id())
+            ->where('kode_barang', 'like', $prefix . '%')
             ->orderBy('kode_barang', 'desc')
             ->first();
 
@@ -93,7 +99,9 @@ class ManajemenBarangController extends Controller
         DB::beginTransaction();
 
         try {
-            $barangEksis = Barang::where('nama_barang', $request->nama_barang)
+            // Pastikan pengecekan barang eksis terkunci ke user_id
+            $barangEksis = Barang::where('user_id', auth()->id())
+                ->where('nama_barang', $request->nama_barang)
                 ->where('tipe_barang', $request->tipe_barang)
                 ->first();
 
@@ -129,7 +137,9 @@ class ManajemenBarangController extends Controller
 
             $kodeBarang = $this->generateKodeBarang($request->kategori);
 
+            // Wajib menyertakan user_id saat pendaftaran barang baru
             $barang = Barang::create([
+                'user_id'     => auth()->id(),
                 'kode_barang' => $kodeBarang,
                 'nama_barang' => $request->nama_barang,
                 'tipe_barang' => $request->tipe_barang,
@@ -162,7 +172,7 @@ class ManajemenBarangController extends Controller
         }
     }
 
-    // UPDATE BARANG STOK
+    // UPDATE BARANG STOK (Scoped to User)
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -177,7 +187,8 @@ class ManajemenBarangController extends Controller
 
         DB::beginTransaction();
         try {
-            $barang = Barang::findOrFail($id);
+            // Menggunakan where user_id sebelum findOrFail untuk mencegah modifikasi data ilegal
+            $barang = Barang::where('user_id', auth()->id())->findOrFail($id);
             $stokLama = $barang->stok;
             $stokBaru = intval($request->stok);
 
@@ -215,12 +226,12 @@ class ManajemenBarangController extends Controller
         }
     }
 
-    // PINDAH KELOMPOK BARANG (NON-STOK KE STOK)
+    // PINDAH KELOMPOK BARANG (Scoped to User)
     public function pindahKeStok($id)
     {
         DB::beginTransaction();
         try {
-            $barang = Barang::findOrFail($id);
+            $barang = Barang::where('user_id', auth()->id())->findOrFail($id);
 
             $barang->update([
                 'tipe_barang' => 'stok',
@@ -248,9 +259,10 @@ class ManajemenBarangController extends Controller
         }
     }
 
+    // DESTROY (Scoped to User)
     public function destroy($id)
     {
-        $barang = Barang::findOrFail($id);
+        $barang = Barang::where('user_id', auth()->id())->findOrFail($id);
         $tipe = $barang->tipe_barang;
         $barang->delete();
 
@@ -259,6 +271,7 @@ class ManajemenBarangController extends Controller
             ->with('success', 'Barang berhasil dihapus');
     }
 
+    // IMPORT EXCEL
     public function import(Request $request)
     {
         $request->validate([
@@ -266,7 +279,6 @@ class ManajemenBarangController extends Controller
         ]);
 
         try {
-            // Bungkus proses import ke dalam try-catch
             Excel::import(new BarangImport, $request->file('file'));
 
             return redirect()
@@ -274,13 +286,13 @@ class ManajemenBarangController extends Controller
                 ->with('success', 'Import data barang berhasil!');
 
         } catch (\Exception $e) {
-            // Jika file excel kosong/error, tangkap pesannya dan kirim sebagai alert error ke view
             return redirect()
                 ->back()
                 ->with('error', 'Gagal Import: ' . $e->getMessage());
         }
     }
 
+    // DOWNLOAD TEMPLATE
     public function downloadTemplate()
     {
         $path = public_path('template/template_barang.xlsx');

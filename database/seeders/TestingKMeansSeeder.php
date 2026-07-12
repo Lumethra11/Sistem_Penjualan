@@ -21,11 +21,12 @@ class TestingKMeansSeeder extends Seeder
         Transaksi::truncate();
         DB::table('histori_stok')->truncate();
         DB::table('notifikasi')->truncate(); 
+        DB::table('riwayat_clustering')->truncate(); // Bersihkan juga riwayat clustering lama agar tidak conflict
         Barang::truncate();
         User::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // 2. SEEDER USER: ADMIN & KASIR
+        // 2. SEEDER USER: ADMIN & KASIR (Ekosistem terisolasi untuk Bengkel AA Motor)
         $admin = User::create([
             'admin_id' => null,
             'role' => 'admin',
@@ -54,47 +55,47 @@ class TestingKMeansSeeder extends Seeder
             'password' => Hash::make('password123'),
         ]);
 
-        // 3. MASTER DATA 20 BARANG (Stok awal dibuat aman)
+        // 3. MASTER DATA 20 BARANG (Scoped ke user_id milik Admin/Bengkel)
         $masterBarang = [
-            ['kode_barang' => 'B-001', 'nama_barang' => 'Aki GS YTZ5S', 'stok' => 200, 'satuan' => 'Pcs', 'harga_beli' => 155000, 'harga_jual' => 185000, 'kategori' => 'Kelistrikan', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-002', 'nama_barang' => 'Aki GS YTZ6V', 'stok' => 200, 'satuan' => 'Pcs', 'harga_beli' => 210000, 'harga_jual' => 245000, 'kategori' => 'Kelistrikan', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-003', 'nama_barang' => 'Ban Luar IRC 80/90-14 NF59', 'stok' => 200, 'satuan' => 'Pcs', 'harga_beli' => 145000, 'harga_jual' => 175000, 'kategori' => 'Ban', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-004', 'nama_barang' => 'Ban Luar IRC 90/90-14 NR73', 'stok' => 200, 'satuan' => 'Pcs', 'harga_beli' => 175000, 'harga_jual' => 210000, 'kategori' => 'Ban', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-005', 'nama_barang' => 'Ban Dalam IRC 2.50/2.75-14', 'stok' => 300, 'satuan' => 'Pcs', 'harga_beli' => 28000, 'harga_jual' => 38000, 'kategori' => 'Ban', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-006', 'nama_barang' => 'Busi Denso U27EPR-9', 'stok' => 500, 'satuan' => 'Pcs', 'harga_beli' => 12500, 'harga_jual' => 20000, 'kategori' => 'Pengapian', 'supplier' => 'Denso Indonesia', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-007', 'nama_barang' => 'Busi NGK CPR9EA-9', 'stok' => 500, 'satuan' => 'Pcs', 'harga_beli' => 13500, 'harga_jual' => 22000, 'kategori' => 'Pengapian', 'supplier' => 'Denso Indonesia', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-008', 'nama_barang' => 'Baut Blok Mesin 12mm', 'stok' => 500, 'satuan' => 'Pcs', 'harga_beli' => 1000, 'harga_jual' => 2500, 'kategori' => 'Mur & Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-009', 'nama_barang' => 'Baut Knalpot Honda Ring 14', 'stok' => 500, 'satuan' => 'Pcs', 'harga_beli' => 1500, 'harga_jual' => 3500, 'kategori' => 'Mur & Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-010', 'nama_barang' => 'Filter Udara Beat FI', 'stok' => 250, 'satuan' => 'Pcs', 'harga_beli' => 30000, 'harga_jual' => 42000, 'kategori' => 'Filter', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-011', 'nama_barang' => 'Filter Udara Vario 125', 'stok' => 250, 'satuan' => 'Pcs', 'harga_beli' => 32000, 'harga_jual' => 45000, 'kategori' => 'Filter', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-012', 'nama_barang' => 'Filter Udara Mio M3', 'stok' => 200, 'satuan' => 'Pcs', 'harga_beli' => 28000, 'harga_jual' => 38000, 'kategori' => 'Filter', 'supplier' => 'Yamaha Motor Parts', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-013', 'nama_barang' => 'Gear Set Supra X 125', 'stok' => 150, 'satuan' => 'Set', 'harga_beli' => 140000, 'harga_jual' => 175000, 'kategori' => 'Suku Cadang', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-014', 'nama_barang' => 'Gear Set Jupiter Z', 'stok' => 150, 'satuan' => 'Set', 'harga_beli' => 135000, 'harga_jual' => 165000, 'kategori' => 'Suku Cadang', 'supplier' => 'Yamaha Motor Parts', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-015', 'nama_barang' => 'Kampas Rem Depan Beat FI', 'stok' => 300, 'satuan' => 'Pcs', 'harga_beli' => 22000, 'harga_jual' => 32000, 'kategori' => 'Pengereman', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-016', 'nama_barang' => 'Kampas Rem Belakang Vario', 'stok' => 300, 'satuan' => 'Pcs', 'harga_beli' => 26000, 'harga_jual' => 38000, 'kategori' => 'Pengereman', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-017', 'nama_barang' => 'Kampas Rem Depan Mio', 'stok' => 300, 'satuan' => 'Pcs', 'harga_beli' => 20000, 'harga_jual' => 30000, 'kategori' => 'Pengereman', 'supplier' => 'Yamaha Motor Parts', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-018', 'nama_barang' => 'Kampas Rem Belakang Mio', 'stok' => 300, 'satuan' => 'Pcs', 'harga_beli' => 24000, 'harga_jual' => 35000, 'kategori' => 'Pengereman', 'supplier' => 'Yamaha Motor Parts', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-019', 'nama_barang' => 'Kampas Kopling Ganda Beat', 'stok' => 150, 'satuan' => 'Pcs', 'harga_beli' => 95000, 'harga_jual' => 125000, 'kategori' => 'CVT Komponen', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
-            ['kode_barang' => 'B-020', 'nama_barang' => 'Oli MPX 1 1L', 'stok' => 300, 'satuan' => 'Botol', 'harga_beli' => 48000, 'harga_jual' => 58000, 'kategori' => 'Pelumas', 'supplier' => 'PT Astra Honda', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-001', 'nama_barang' => 'Kampas KPH Ⓐ', 'stok' => 15, 'satuan' => 'Pcs', 'harga_beli' => 35000, 'harga_jual' => 45000, 'kategori' => 'Pengereman', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-002', 'nama_barang' => 'Kampas Mio Aspira', 'stok' => 15, 'satuan' => 'Pcs', 'harga_beli' => 31500, 'harga_jual' => 40000, 'kategori' => 'Pengereman', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-003', 'nama_barang' => 'Dispad KVB/Vario', 'stok' => 15, 'satuan' => 'Pcs', 'harga_beli' => 19000, 'harga_jual' => 28000, 'kategori' => 'Pengereman', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-004', 'nama_barang' => 'Kampas Kopling Grand', 'stok' => 10, 'satuan' => 'Pcs', 'harga_beli' => 7000, 'harga_jual' => 8500, 'kategori' => 'Engine', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-005', 'nama_barang' => 'Pack Kop Grand', 'stok' => 20, 'satuan' => 'Pcs', 'harga_beli' => 7750, 'harga_jual' => 12000, 'kategori' => 'Packing', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-006', 'nama_barang' => 'Kabel Gas', 'stok' => 40, 'satuan' => 'Pcs', 'harga_beli' => 4500, 'harga_jual' => 10000, 'kategori' => 'Engine', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-007', 'nama_barang' => 'Baut Flange 6x20', 'stok' => 100, 'satuan' => 'Pcs', 'harga_beli' => 750, 'harga_jual' => 1500, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-008', 'nama_barang' => 'Baut Flange 8x20', 'stok' => 100, 'satuan' => 'Pcs', 'harga_beli' => 1250, 'harga_jual' => 2500, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-009', 'nama_barang' => 'Skrup Filter Beat', 'stok' => 43, 'satuan' => 'Pcs', 'harga_beli' => 400, 'harga_jual' => 2000, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-010', 'nama_barang' => 'Kancingan Rantai 428H', 'stok' => 49, 'satuan' => 'Pcs', 'harga_beli' => 1400, 'harga_jual' => 2000, 'kategori' => 'Engine', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-011', 'nama_barang' => 'Baut Tap Yamaha', 'stok' => 46, 'satuan' => 'Pcs', 'harga_beli' => 6750, 'harga_jual' => 10000, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-012', 'nama_barang' => 'Mur As Roda (M14)', 'stok' => 40, 'satuan' => 'Pcs', 'harga_beli' => 3500, 'harga_jual' => 8500, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-013', 'nama_barang' => 'Per Standar Samping Honda', 'stok' => 30, 'satuan' => 'Pcs', 'harga_beli' => 3000, 'harga_jual' => 7000, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-014', 'nama_barang' => 'Gantungan Barang', 'stok' => 30, 'satuan' => 'Pcs', 'harga_beli' => 2000, 'harga_jual' => 5000, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-015', 'nama_barang' => 'Mur Pully Mio', 'stok' => 40, 'satuan' => 'Pcs', 'harga_beli' => 4000, 'harga_jual' => 8000, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-016', 'nama_barang' => 'Baut JP 6x35', 'stok' => 100, 'satuan' => 'Pcs', 'harga_beli' => 500, 'harga_jual' => 2000, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-017', 'nama_barang' => 'Baut Kontak', 'stok' => 97, 'satuan' => 'Pcs', 'harga_beli' => 120, 'harga_jual' => 1000, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-018', 'nama_barang' => 'Sekering Kotak', 'stok' => 30, 'satuan' => 'Pcs', 'harga_beli' => 500, 'harga_jual' => 2000, 'kategori' => 'Kelistrikan', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-019', 'nama_barang' => 'Baut Tutup / Hood Klep', 'stok' => 98, 'satuan' => 'Pcs', 'harga_beli' => 6000, 'harga_jual' => 8000, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
+            ['kode_barang' => 'B-020', 'nama_barang' => 'Baut Per Aki', 'stok' => 199, 'satuan' => 'Pcs', 'harga_beli' => 500, 'harga_jual' => 1500, 'kategori' => 'Baut', 'supplier' => 'Putra Otomotif', 'tipe_barang' => 'stok'],
         ];
 
         DB::beginTransaction();
         try {
             $barangInstances = [];
             foreach ($masterBarang as $mb) {
+                // FIX 1: Menyuntikkan user_id Admin bengkel agar barang terdaftar sah secara multi-tenant
+                $mb['user_id'] = $admin->id;
                 $barangInstances[$mb['kode_barang']] = Barang::create($mb);
             }
 
-            // Simulasi Periode: Mundur 4 minggu ke belakang
-            $startPeriod = Carbon::now()->subWeeks(4)->startOfWeek(Carbon::MONDAY);
-            $endPeriod = Carbon::now()->subWeek()->endOfWeek(Carbon::SUNDAY);
+            $startPeriod = Carbon::now()->subDays(7)->startOfDay();
+            $endPeriod = Carbon::now()->subDay()->endOfDay();
 
-            $this->command->info("Menyuntikkan data transaksi murni dari: " . $startPeriod->toDateString() . " s/d " . $endPeriod->toDateString());
+            $this->command->info("Menyuntikkan data transaksi murni periode: " . $startPeriod->toDateString() . " s/d " . $endPeriod->toDateString());
 
+            // Naikkan jumlah transaksi per hari agar sebaran data lebih luas (bengkel ramai)
             for ($date = clone $startPeriod; $date->lte($endPeriod); $date->addDay()) {
-                
-                // Transaksi harian berkisar antara 8 hingga 10 nota
-                $jumlahTransaksiHariIni = rand(8, 10); 
+                $jumlahTransaksiHariIni = rand(8, 15); 
 
                 for ($inv = 1; $inv <= $jumlahTransaksiHariIni; $inv++) {
                     $waktuSpesifik = clone $date;
@@ -123,36 +124,47 @@ class TestingKMeansSeeder extends Seeder
                     $subtotalInvoice = 0;
                     $itemsNotaIni = [];
 
-                    // STRATEGI PROBABILITAS ALAMI (Murni Transaksi Penjualan)
-                    // Sistem memilih barang yang dibeli berdasarkan kebiasaan nyata di bengkel:
-                    
-                    // Skenario 1: Barang Fast-Moving (Peluang beli 90% di setiap nota, misal: Busi / Baut)
-                    if (rand(1, 100) <= 90) {
-                        $fastItems = ['B-006', 'B-007', 'B-008', 'B-009'];
+                    // DEFINISI KELOMPOK TARGET AGAR K-MEANS DAPAT POLA STRUKTUR JELAS
+                    // Kelompok Laris: Baut umum & Kabel Gas
+                    $fastItems = ['B-006', 'B-007', 'B-008', 'B-009', 'B-016', 'B-017', 'B-020'];
+                    // Kelompok Sedang: Per, Mur, Gantungan, Sekering
+                    $mediumItems = ['B-005', 'B-010', 'B-011', 'B-012', 'B-013', 'B-014', 'B-015', 'B-018', 'B-019'];
+                    // Kelompok Lambat: Kampas Rem & Komponen Pengereman Vital
+                    $slowItems = ['B-001', 'B-002', 'B-003', 'B-004'];
+
+                    // Logika pengisian nota belanjaan konsumen secara acak terstruktur
+                    if (rand(1, 100) <= 80) { // 80% kemungkinan beli barang fast-moving
                         $itemsNotaIni[] = $fastItems[array_rand($fastItems)];
+                        if (rand(1, 100) <= 30) { 
+                            $itemsNotaIni[] = $fastItems[array_rand($fastItems)];
+                        }
                     }
 
-                    // Skenario 2: Barang Medium-Moving (Peluang beli 50% di setiap nota, misal: Kampas Rem / Filter)
-                    if (rand(1, 100) <= 50) {
-                        $mediumItems = ['B-005', 'B-010', 'B-011', 'B-015', 'B-016', 'B-017', 'B-018'];
+                    if (rand(1, 100) <= 45) { // 45% kemungkinan beli barang medium-moving
                         $itemsNotaIni[] = $mediumItems[array_rand($mediumItems)];
                     }
 
-                    // Skenario 3: Barang Slow-Moving (Peluang beli hanya 15% di setiap nota, misal: Aki / Ban Luar / Gear Set)
-                    if (rand(1, 100) <= 15) {
-                        $slowItems = ['B-001', 'B-002', 'B-003', 'B-004', 'B-012', 'B-013', 'B-014', 'B-019', 'B-020'];
+                    if (rand(1, 100) <= 12) { // Hanya 12% kemungkinan ganti kampas rem (slow-moving)
                         $itemsNotaIni[] = $slowItems[array_rand($slowItems)];
                     }
 
-                    // Hapus duplikasi kode jika tidak sengaja terambil ganda dalam 1 nota
                     $itemsNotaIni = array_unique($itemsNotaIni);
 
-                    // Eksekusi pembuatan data item terjual
                     foreach ($itemsNotaIni as $kodeB) {
                         $barang = $barangInstances[$kodeB];
-                        $qtyJual = 1; // Rata-rata dibeli 1 unit per transaksi
+                        
+                        if (in_array($kodeB, $fastItems)) {
+                            $qtyJual = rand(2, 4); 
+                        } else if (in_array($kodeB, $mediumItems)) {
+                            $qtyJual = rand(1, 2);
+                        } else {
+                            $qtyJual = 1; 
+                        }
 
-                        if ($barang->stok < $qtyJual) continue;
+                        // Proteksi mutlak agar stok riil tidak minus
+                        if ($barang->stok < $qtyJual) {
+                            continue;
+                        }
 
                         $barang->decrement('stok', $qtyJual);
                         $subtotalItem = $barang->harga_jual * $qtyJual;
@@ -169,7 +181,9 @@ class TestingKMeansSeeder extends Seeder
                             'updated_at'        => $waktuSpesifik,
                         ]);
 
+                        // FIX 2: Menyertakan field user_id (ID Admin Bengkel) pada pembuatan log histori_stok
                         DB::table('histori_stok')->insert([
+                            'user_id'           => $admin->id,
                             'barang_id'         => $barang->id,
                             'jenis_pergerakan'  => 'keluar',
                             'jumlah'            => $qtyJual,
@@ -201,9 +215,8 @@ class TestingKMeansSeeder extends Seeder
 
             DB::commit();
             $this->command->info("==========================================================================");
-            $this->command->info(" SEEDER BERHASIL: 20 Master barang sukses dimasukkan.");
-            $this->command->info(" Riwayat transaksi murni (tanpa embel-embel klaster manual) sukses dibuat!");
-            $this->command->info(" Silakan jalankan KMeansService Anda untuk melihat hasil perhitungan aslinya.");
+            $this->command->info(" SEEDER BERHASIL UPDATE: Distribusi data penjualan barang kini bervariasi.");
+            $this->command->info(" Gap Cluster Laris, Sedang, Kurang Laris akan terlihat kontras di K-Means.");
             $this->command->info("==========================================================================");
 
         } catch (\Exception $e) {
