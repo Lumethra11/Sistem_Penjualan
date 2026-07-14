@@ -263,7 +263,7 @@ class KasirController extends Controller
         $user = Auth::user();
         $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
 
-        // Validasi Otoritas Nota: Ambil nota jika dibuat oleh kru bengkel internal ini saja
+        // Validasi Otoritas Nota: Ambil nota jika dibuat oleh kasir bengkel internal ini saja
         $transaksi = Transaksi::with('details')
             ->whereHas('user', function($q) use ($adminId) {
                 $q->where('id', $adminId)->orWhere('admin_id', $adminId);
