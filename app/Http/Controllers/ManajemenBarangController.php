@@ -119,14 +119,16 @@ class ManajemenBarangController extends Controller
                     'supplier' => $request->supplier,
                 ]);
 
+                // FIX: Menambahkan user_id milik admin yang sedang login
                 DB::table('histori_stok')->insert([
-                    'barang_id' => $barangEksis->id,
-                    'jenis_pergerakan' => 'masuk',
-                    'jumlah' => $tambahStok,
+                    'user_id'            => auth()->id(),
+                    'barang_id'          => $barangEksis->id,
+                    'jenis_pergerakan'   => 'masuk',
+                    'jumlah'             => $tambahStok,
                     'sisa_stok_saat_ini' => $stokBaru,
-                    'keterangan' => 'Restok barang (akumulasi nama sama) via Form Master Barang',
-                    'created_at' => now(),
-                    'updated_at' => now()
+                    'keterangan'         => 'Restok barang (akumulasi nama sama) via Form Master Barang',
+                    'created_at'         => now(),
+                    'updated_at'         => now()
                 ]);
 
                 DB::commit();
@@ -151,14 +153,16 @@ class ManajemenBarangController extends Controller
                 'supplier'    => $request->supplier,
             ]);
 
+            // FIX: Menambahkan user_id milik admin yang sedang login
             DB::table('histori_stok')->insert([
-                'barang_id' => $barang->id,
-                'jenis_pergerakan' => 'masuk',
-                'jumlah' => $request->stok,
+                'user_id'            => auth()->id(),
+                'barang_id'          => $barang->id,
+                'jenis_pergerakan'   => 'masuk',
+                'jumlah'             => $request->stok,
                 'sisa_stok_saat_ini' => $request->stok,
-                'keterangan' => 'Pendaftaran data master barang baru',
-                'created_at' => now(),
-                'updated_at' => now()
+                'keterangan'         => 'Pendaftaran data master barang baru',
+                'created_at'         => now(),
+                'updated_at'         => now()
             ]);
 
             DB::commit();
@@ -204,14 +208,17 @@ class ManajemenBarangController extends Controller
 
             if ($stokLama != $stokBaru) {
                 $selisih = $stokBaru - $stokLama;
+                
+                // FIX: Menambahkan user_id milik admin yang sedang login
                 DB::table('histori_stok')->insert([
-                    'barang_id' => $barang->id,
-                    'jenis_pergerakan' => 'penyesuaian',
-                    'jumlah' => abs($selisih),
+                    'user_id'            => auth()->id(),
+                    'barang_id'          => $barang->id,
+                    'jenis_pergerakan'   => 'penyesuaian',
+                    'jumlah'             => abs($selisih),
                     'sisa_stok_saat_ini' => $stokBaru,
-                    'keterangan' => 'Penyesuaian manual data barang oleh admin',
-                    'created_at' => now(),
-                    'updated_at' => now()
+                    'keterangan'         => 'Penyesuaian manual data barang oleh admin',
+                    'created_at'         => now(),
+                    'updated_at'         => now()
                 ]);
             }
 
@@ -238,14 +245,16 @@ class ManajemenBarangController extends Controller
                 'stok' => 0 
             ]);
 
+            // FIX: Menambahkan user_id milik admin yang sedang login
             DB::table('histori_stok')->insert([
-                'barang_id' => $barang->id,
-                'jenis_pergerakan' => 'penyesuaian',
-                'jumlah' => 0,
+                'user_id'            => auth()->id(),
+                'barang_id'          => $barang->id,
+                'jenis_pergerakan'   => 'penyesuaian',
+                'jumlah'             => 0,
                 'sisa_stok_saat_ini' => 0,
-                'keterangan' => 'Migrasi tipe barang dari Non-Stok menjadi tipe Barang Stok',
-                'created_at' => now(),
-                'updated_at' => now()
+                'keterangan'         => 'Migrasi tipe barang dari Non-Stok menjadi tipe Barang Stok',
+                'created_at'         => now(),
+                'updated_at'         => now()
             ]);
 
             DB::commit();

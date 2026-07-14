@@ -33,7 +33,7 @@ class AuthController extends Controller
             'nama_toko'   => 'required|string|max:100|unique:users,nama_toko',
             'alamat'      => 'required|string', 
             'no_telp'     => 'nullable|string|max:20|unique:users,no_telp',
-            'password'    => 'required|string|min:5|confirmed',
+            'password'    => 'required|string|min:8|confirmed',
         ], [
             'name.required'        => 'Nama lengkap wajib diisi',
             'name.max'             => 'Nama maksimal 100 karakter',
@@ -56,7 +56,7 @@ class AuthController extends Controller
             'no_telp.unique'       => 'No telepon sudah terdaftar pada akun lain',
 
             'password.required'    => 'Password wajib diisi',
-            'password.min'         => 'Password minimal 5 karakter',
+            'password.min'         => 'Password minimal 8 karakter',
             'password.confirmed'   => 'Konfirmasi password tidak cocok',
         ]);
 

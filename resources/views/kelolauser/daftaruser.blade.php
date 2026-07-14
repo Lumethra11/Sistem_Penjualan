@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar User')
+@section('title', 'Daftar Kasir')
 
 @vite('resources/css/pages/kelolauser.css')
 
@@ -8,43 +8,35 @@
 
 <div class="kelola-user-container">
 
-    <h1>Kelola User</h1>
+    <h1>Kelola Kasir</h1>
 
-    {{-- TAB UTAMA (MAIN NAVIGATION) --}}
+    {{-- TAB UTAMA --}}
     <div class="tab-container">
-        <a href="{{ route('kelolauser.tambah') }}" class="tab-button">
-            Tambah User
-        </a>
-        <a href="{{ route('kelolauser.daftar') }}" class="tab-button active">
-            Daftar User
-        </a>
+        <a href="{{ route('kelolauser.tambah') }}" class="tab-button">Tambah Kasir</a>
+        <a href="{{ route('kelolauser.daftar') }}" class="tab-button active">Daftar Kasir</a>
     </div>
 
-    {{-- Ambil parameter status dari URL, default ke 'aktif' --}}
     @php
         $statusFilter = request('status', 'aktif');
     @endphp
 
-    {{-- FILTER TABS (UNDERLINE DESIGN) --}}
+    {{-- FILTER TABS --}}
     <div class="filter-tabs">
         <a href="{{ route('kelolauser.daftar', ['status' => 'aktif']) }}" 
            class="filter-btn {{ $statusFilter == 'aktif' ? 'active' : '' }}">
-            User Aktif
+            Kasir Aktif
         </a>
         <a href="{{ route('kelolauser.daftar', ['status' => 'nonaktif']) }}" 
            class="filter-btn {{ $statusFilter == 'nonaktif' ? 'active' : '' }}">
-            User Tidak Aktif
+            Kasir Tidak Aktif
         </a>
     </div>
 
-    {{-- =========================================
-         KONDISI JIKA FILTER "AKTIF" DIPILIH
-         ========================================= --}}
+    {{-- KONDISI FILTER AKTIF --}}
     @if($statusFilter == 'aktif')
         <div class="user-grid">
             @forelse($users->where('is_active', true) as $user)
                 <div class="user-card">
-                    {{-- Badge Status dipindah ke pojok kanan atas --}}
                     <span class="status-badge aktif">Aktif</span>
 
                     <div class="user-top">
@@ -66,10 +58,6 @@
                             <span>No Telepon</span>
                             <strong>{{ $user->no_telp ?? '-' }}</strong>
                         </div>
-                        <div class="info-item">
-                            <span>Alamat</span>
-                            <strong>{{ $user->alamat ?? '-' }}</strong>
-                        </div>
                         <div class="info-item-row">
                             <span>Izin Input Manual</span>
                             <span class="inline-privilege {{ $user->can_input_manual_barang ? 'allowed' : 'denied' }}">
@@ -84,13 +72,9 @@
                                 @csrf
                                 @method('PUT')
                                 @if($user->can_input_manual_barang)
-                                    <button type="submit" class="action-btn warning-btn">
-                                        Cabut Izin
-                                    </button>
+                                    <button type="submit" class="action-btn warning-btn">Cabut Izin</button>
                                 @else
-                                    <button type="submit" class="action-btn primary-btn">
-                                        Izinkan Manual
-                                    </button>
+                                    <button type="submit" class="action-btn primary-btn">Izinkan Manual</button>
                                 @endif
                             </form>
                             <button type="button" class="action-btn danger-btn" onclick="openModal({{ $user->id }}, 'nonaktifkan')">
@@ -100,20 +84,15 @@
                     </div>
                 </div>
             @empty
-                <div class="empty-user">
-                    Tidak ada user aktif saat ini.
-                </div>
+                <div class="empty-user">Tidak ada kasir aktif saat ini.</div>
             @endforelse
         </div>
 
-    {{-- =========================================
-         KONDISI JIKA FILTER "NONAKTIF" DIPILIH
-         ========================================= --}}
+    {{-- KONDISI FILTER NONAKTIF --}}
     @else
         <div class="user-grid">
             @forelse($users->where('is_active', false) as $user)
                 <div class="user-card inactive-card">
-                    {{-- Badge Status dipindah ke pojok kanan atas --}}
                     <span class="status-badge nonaktif">Tidak Aktif</span>
 
                     <div class="user-top">
@@ -135,10 +114,6 @@
                             <span>No Telepon</span>
                             <strong>{{ $user->no_telp ?? '-' }}</strong>
                         </div>
-                        <div class="info-item">
-                            <span>Alamat</span>
-                            <strong>{{ $user->alamat ?? '-' }}</strong>
-                        </div>
                     </div>
 
                     <div class="user-footer">
@@ -147,13 +122,9 @@
                                 @csrf
                                 @method('PUT')
                                 @if($user->can_input_manual_barang)
-                                    <button type="submit" class="action-btn warning-btn">
-                                        Cabut Izin
-                                    </button>
+                                    <button type="submit" class="action-btn warning-btn">Cabut Izin</button>
                                 @else
-                                    <button type="submit" class="action-btn primary-btn">
-                                        Izinkan Manual
-                                    </button>
+                                    <button type="submit" class="action-btn primary-btn">Izinkan Manual</button>
                                 @endif
                             </form>
                             <button type="button" class="action-btn success-btn" onclick="openModal({{ $user->id }}, 'aktifkan')">
@@ -163,9 +134,7 @@
                     </div>
                 </div>
             @empty
-                <div class="empty-user">
-                    Tidak ada user nonaktif saat ini.
-                </div>
+                <div class="empty-user">Tidak ada Kasir nonaktif saat ini.</div>
             @endforelse
         </div>
     @endif
@@ -204,11 +173,11 @@
         form.action = `/kelola-user/status/${userId}`;
 
         if(action === 'nonaktifkan') {
-            title.innerText = 'Nonaktifkan User';
-            desc.innerText = 'Apakah Anda yakin ingin menonaktifkan user ini?';
+            title.innerText = 'Nonaktifkan Kasir';
+            desc.innerText = 'Apakah Anda yakin ingin menonaktifkan kasir ini?';
         } else {
-            title.innerText = 'Aktifkan User';
-            desc.innerText = 'Apakah Anda yakin ingin mengaktifkan user ini?';
+            title.innerText = 'Aktifkan Kasir';
+            desc.innerText = 'Apakah Anda yakin ingin mengaktifkan kasir ini?';
         }
 
         modal.classList.add('active');

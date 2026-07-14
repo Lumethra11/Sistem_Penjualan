@@ -24,7 +24,7 @@
                 <a href="{{ route('kelolauser.daftar') }}"
                    class="sidebar-link {{ request()->routeIs('kelolauser.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-users"></i>
-                    <span>Kelola User</span>
+                    <span>Kelola Kasir</span>
                 </a>
             </li>
 

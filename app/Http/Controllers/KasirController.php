@@ -179,15 +179,16 @@ class KasirController extends Controller
 
                                 $barangId = $barangBaru->id;
 
-                                // Catat log pendaftaran awal barang non-stok
+                                // FIX 1: Menambahkan user_id (akun kasir/admin yang sedang bertugas) saat log barang manual baru
                                 DB::table('histori_stok')->insert([
-                                    'barang_id' => $barangId,
-                                    'jenis_pergerakan' => 'masuk',
-                                    'jumlah' => 0,
+                                    'user_id'            => auth()->id(),
+                                    'barang_id'          => $barangId,
+                                    'jenis_pergerakan'   => 'masuk',
+                                    'jumlah'             => 0,
                                     'sisa_stok_saat_ini' => 0,
-                                    'keterangan' => 'Barang baru (Non-Stok) dibuat otomatis dari cetak transaksi manual kasir',
-                                    'created_at' => now(),
-                                    'updated_at' => now()
+                                    'keterangan'         => 'Barang baru (Non-Stok) dibuat otomatis dari cetak transaksi manual kasir',
+                                    'created_at'         => now(),
+                                    'updated_at'         => now()
                                 ]);
                             }
                         }
@@ -211,15 +212,16 @@ class KasirController extends Controller
                                 $sisaStokLog = 0;
                             }
 
-                            // Catat log mutasi pengeluaran stok
+                            // FIX 2: Menambahkan user_id (akun kasir/admin yang sedang bertugas) pada mutasi stok penjualan
                             DB::table('histori_stok')->insert([
-                                'barang_id' => $barang->id,
-                                'jenis_pergerakan' => 'keluar',
-                                'jumlah' => $qty,
+                                'user_id'            => auth()->id(),
+                                'barang_id'          => $barang->id,
+                                'jenis_pergerakan'   => 'keluar',
+                                'jumlah'             => $qty,
                                 'sisa_stok_saat_ini' => $sisaStokLog,
-                                'keterangan' => 'Penjualan Selesai Nota ' . $transaksi->no_invoice,
-                                'created_at' => now(),
-                                'updated_at' => now()
+                                'keterangan'         => 'Penjualan Selesai Nota ' . $transaksi->no_invoice,
+                                'created_at'         => now(),
+                                'updated_at'         => now()
                             ]);
                         }
                     }
