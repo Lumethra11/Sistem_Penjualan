@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\DetailTransaksi;
 use App\Models\Notifikasi;
-use App\Services\KMeansService; // Pastikan namespace ini sesuai dengan lokasi KMeansService Anda
+use App\Services\KMeansService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -49,7 +49,7 @@ class NotifikasiController extends Controller
         // 1. Jalankan sinkronisasi sebelum diambil oleh navbar floating
         $this->generateNotifikasiKeDatabase();
         
-        // 2. Ambil notifikasi yang belum dibaca milik user ini
+        // 2. Ambil notifikasi yang belum dibaca
         $unreadNotifications = Notifikasi::where('user_id', auth()->id())
             ->where('is_read', false)
             ->orderBy('created_at', 'desc')
@@ -80,7 +80,6 @@ class NotifikasiController extends Controller
      */
     public function markAsRead(Request $request, $id)
     {
-        // Pastikan mencari berdasarkan id_item DAN user_id agar tidak memanipulasi data bengkel lain
         $notif = Notifikasi::where('user_id', auth()->id())
             ->where('id_item', $id)
             ->first();
@@ -106,7 +105,6 @@ class NotifikasiController extends Controller
         $user = auth()->user();
         $userId = $user->id;
         
-        // Aturan multi-tenant: Jika kasir yang mengakses, jangkar data ditarik ke admin pembuatnya
         $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
         
         $start = Carbon::now()->startOfWeek(Carbon::MONDAY);
@@ -128,7 +126,7 @@ class NotifikasiController extends Controller
         foreach ($dataset as $item) {
             
             // 1. Kondisi Stok Kritis / Habis (Batas operasional aman gudang)
-            if ($item['stok'] <= 5) {
+            if ($item['stok'] <= 2) {
                 Notifikasi::updateOrCreate(
                     [
                         'user_id' => $userId,
@@ -143,7 +141,7 @@ class NotifikasiController extends Controller
                 );
             }
             
-            // 2. Kondisi Hasil Cluster Laris (Rekomendasi Restock Berbasis K-Means Sentral)
+            // 2. Kondisi Hasil Cluster Laris (Rekomendasi Restock Berbasis K-Means)
             if ($item['label'] === 'Laris') {
                 Notifikasi::updateOrCreate(
                     [
