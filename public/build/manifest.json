@@ -8,6 +8,87 @@
       "app.css"
     ]
   },
+  "resources/css/auth/login.css": {
+    "file": "assets/login-BB3Xqiov.css",
+    "src": "resources/css/auth/login.css",
+    "isEntry": true,
+    "name": "login",
+    "names": [
+      "login.css"
+    ]
+  },
+  "resources/css/auth/lupapassword.css": {
+    "file": "assets/lupapassword-D2_JllHJ.css",
+    "src": "resources/css/auth/lupapassword.css",
+    "isEntry": true,
+    "name": "lupapassword",
+    "names": [
+      "lupapassword.css"
+    ]
+  },
+  "resources/css/auth/register.css": {
+    "file": "assets/register-CqvYR_34.css",
+    "src": "resources/css/auth/register.css",
+    "isEntry": true,
+    "name": "register",
+    "names": [
+      "register.css"
+    ]
+  },
+  "resources/css/pages/dashboard.css": {
+    "file": "assets/dashboard-BlHa3iaj.css",
+    "src": "resources/css/pages/dashboard.css",
+    "isEntry": true,
+    "name": "dashboard",
+    "names": [
+      "dashboard.css"
+    ]
+  },
+  "resources/css/pages/kasir.css": {
+    "file": "assets/kasir-BYuc8XVO.css",
+    "src": "resources/css/pages/kasir.css",
+    "isEntry": true,
+    "name": "kasir",
+    "names": [
+      "kasir.css"
+    ]
+  },
+  "resources/css/pages/kelolauser.css": {
+    "file": "assets/kelolauser-T-0sUq4j.css",
+    "src": "resources/css/pages/kelolauser.css",
+    "isEntry": true,
+    "name": "kelolauser",
+    "names": [
+      "kelolauser.css"
+    ]
+  },
+  "resources/css/pages/laporan.css": {
+    "file": "assets/laporan-U8RBQzyw.css",
+    "src": "resources/css/pages/laporan.css",
+    "isEntry": true,
+    "name": "laporan",
+    "names": [
+      "laporan.css"
+    ]
+  },
+  "resources/css/pages/manajemenbarang.css": {
+    "file": "assets/manajemenbarang-D-r3B-OY.css",
+    "src": "resources/css/pages/manajemenbarang.css",
+    "isEntry": true,
+    "name": "manajemenbarang",
+    "names": [
+      "manajemenbarang.css"
+    ]
+  },
+  "resources/css/pages/profile.css": {
+    "file": "assets/profile-DQMPFzAR.css",
+    "src": "resources/css/pages/profile.css",
+    "isEntry": true,
+    "name": "profile",
+    "names": [
+      "profile.css"
+    ]
+  },
   "resources/css/welcome.css": {
     "file": "assets/welcome-BrfGGuxL.css",
     "src": "resources/css/welcome.css",
