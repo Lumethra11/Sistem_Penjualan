@@ -3,6 +3,11 @@
 @section('content')
 @vite('resources/css/pages/kasir.css')
 
+<!-- CDN jQuery & Select2 (CSS & JS) untuk Search inside Dropdown Menu -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <div class="kasir-container">
     <div class="kasir-header">
         <h1>Kasir</h1>
@@ -62,43 +67,47 @@
                     </div>
                 </div>
 
+                {{-- TAMBAH BARANG STOK --}}
                 <div class="panel-section">
                     <h3>Tambah Barang Stok</h3>
-                    <div class="form-grid-2">
-                        <select id="selectBarangStok">
-                            <option value="">Pilih Barang Stok</option>
-                            @foreach($barangStok as $barang)
-                                <option value="{{ $barang->id }}" 
-                                        data-nama="{{ $barang->nama_barang }}" 
-                                        data-harga="{{ $barang->harga_jual }}"
-                                        data-harga-beli="{{ $barang->harga_beli }}"
-                                        style="{{ $barang->stok <= 0 ? 'color: #EF4444; font-weight: 600;' : '' }}"
-                                        {{ $barang->stok <= 0 ? 'disabled' : '' }}>
-                                    {{ $barang->nama_barang }} (Stok: {{ $barang->stok }} {{ $barang->satuan }}) {{ $barang->stok <= 0 ? '- [HABIS]' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <button type="button" class="btn-blue" onclick="addBarangToTable('selectBarangStok')">+ Tambah Stok</button>
+                    <div class="dropdown-row-grid">
+                        <div class="select-wrapper">
+                            <select id="selectBarangStok" class="select2-kasir">
+                                <option value="">Pilih Barang Stok</option>
+                                @foreach($barangStok as $barang)
+                                    <option value="{{ $barang->id }}" 
+                                            data-nama="{{ $barang->nama_barang }}" 
+                                            data-harga="{{ $barang->harga_jual }}"
+                                            data-harga-beli="{{ $barang->harga_beli }}"
+                                            {{ $barang->stok <= 0 ? 'disabled' : '' }}>
+                                        {{ $barang->nama_barang }} (Stok: {{ $barang->stok }} {{ $barang->satuan }}) {{ $barang->stok <= 0 ? '- [HABIS]' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="button" class="btn-blue btn-fixed-action" onclick="addBarangToTable('selectBarangStok')">+ Tambah Stok</button>
                     </div>
                 </div>
 
+                {{-- TAMBAH BARANG NON STOK --}}
                 <div class="panel-section">
                     <h3>Tambah Barang Non Stok</h3>
-                    <div class="form-grid-2">
-                        <select id="selectBarangNonStok">
-                            <option value="">Pilih Barang Non Stok</option>
-                            @foreach($barangNonStok as $barang)
-                                <option value="{{ $barang->id }}" 
-                                        data-nama="{{ $barang->nama_barang }}" 
-                                        data-harga="{{ $barang->harga_jual }}"
-                                        data-harga-beli="{{ $barang->harga_beli }}"
-                                        style="{{ $barang->stok <= 0 ? 'color: #EF4444; font-weight: 600;' : '' }}"
-                                        {{ $barang->stok <= 0 ? 'disabled' : '' }}>
-                                    {{ $barang->nama_barang }} (Stok: {{ $barang->stok }} {{ $barang->satuan }}) {{ $barang->stok <= 0 ? '- [HABIS]' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <button type="button" class="btn-blue" onclick="addBarangToTable('selectBarangNonStok')">+ Tambah Non Stok</button>
+                    <div class="dropdown-row-grid">
+                        <div class="select-wrapper">
+                            <select id="selectBarangNonStok" class="select2-kasir">
+                                <option value="">Pilih Barang Non Stok</option>
+                                @foreach($barangNonStok as $barang)
+                                    <option value="{{ $barang->id }}" 
+                                            data-nama="{{ $barang->nama_barang }}" 
+                                            data-harga="{{ $barang->harga_jual }}"
+                                            data-harga-beli="{{ $barang->harga_beli }}"
+                                            {{ $barang->stok <= 0 ? 'disabled' : '' }}>
+                                        {{ $barang->nama_barang }} (Stok: {{ $barang->stok }} {{ $barang->satuan }}) {{ $barang->stok <= 0 ? '- [HABIS]' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="button" class="btn-blue btn-fixed-action" onclick="addBarangToTable('selectBarangNonStok')">+ Tambah Non Stok</button>
                     </div>
                 </div>
 
@@ -224,6 +233,31 @@
     const draftsData = @json($drafts);
     let cartIndex = 0;
 
+    $(document).ready(function() {
+        // Inisialisasi Select2 dengan Search Field DI DALAM Dropdown Menu
+        $('#selectBarangStok').select2({
+            placeholder: "Pilih Barang Stok",
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "Barang tidak ditemukan";
+                }
+            }
+        });
+
+        $('#selectBarangNonStok').select2({
+            placeholder: "Pilih Barang Non Stok",
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "Barang tidak ditemukan";
+                }
+            }
+        });
+    });
+
     function toggleMetodePembayaran() {
         const metode = document.getElementById('formMetode').value;
         const rowNominalBayar = document.getElementById('rowNominalBayar');
@@ -294,26 +328,28 @@
     }
 
     function addBarangToTable(selectElementId) {
-        let select = document.getElementById(selectElementId);
-        if(select.value === "") return alert("Pilih barang terlebih dahulu!");
-
-        let option = select.options[select.selectedIndex];
+        let select = $('#' + selectElementId);
+        let selectedValue = select.val();
         
-        if(option.disabled) {
+        if(!selectedValue || selectedValue === "") return alert("Pilih barang terlebih dahulu!");
+
+        let option = select.find(':selected');
+        
+        if(option.is(':disabled')) {
             alert("Barang ini tidak dapat dipilih karena stok di toko sudah habis (0)!");
-            select.value = "";
+            select.val(null).trigger('change');
             return;
         }
 
         renderRowHtml({
-            id: option.value,
-            nama: option.getAttribute('data-nama'),
-            harga: parseFloat(option.getAttribute('data-harga')) || 0,
-            harga_beli: parseFloat(option.getAttribute('data-harga-beli')) || 0,
+            id: selectedValue,
+            nama: option.data('nama'),
+            harga: parseFloat(option.data('harga')) || 0,
+            harga_beli: parseFloat(option.data('harga-beli')) || 0,
             qty: 1
         }, false);
         
-        select.value = "";
+        select.val(null).trigger('change');
     }
 
     function addManualToTable() {
@@ -427,6 +463,10 @@
         document.getElementById('formTransaksiId').value = '';
         document.querySelectorAll('tr[id^="row-"]').forEach(tr => tr.remove());
         document.getElementById('emptyRow').style.display = '';
+
+        $('#selectBarangStok').val(null).trigger('change');
+        $('#selectBarangNonStok').val(null).trigger('change');
+
         toggleMetodePembayaran();
         kalkulasiTotal();
     }
