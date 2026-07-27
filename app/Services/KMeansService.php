@@ -218,7 +218,7 @@ class KMeansService
         $periodeKey = Carbon::parse($startDate)->format('Ymd');
 
         foreach ($results as $res) {
-            // 1. Simpan Rekam Jejak ke Tabel Riwayat dengan Pengunci user_id Admin
+            // 1. Simpan Rekam Jejak ke Tabel Riwayat
             RiwayatClustering::create([
                 'user_id'         => $adminId, 
                 'tanggal_proses'  => Carbon::now()->toDateString(),
@@ -229,27 +229,52 @@ class KMeansService
                 'label_cluster'   => $res->label_cluster,
             ]);
 
-            // 2. Evaluasi Kondisi Hasil Klasterisasi Pemasaran
+            // Ambil data detail barang untuk mengecek minimum_stock
+            $barang = Barang::where('user_id', $adminId)->where('kode_barang', $res->kode_barang)->first();
+            $minStock = $barang ? (int)$barang->minimum_stock : 1;
+            $currentStock = (int)$res->stok;
+
+            // 2. Evaluasi Kondisi Hasil Klasterisasi & Aturan Stok Minimum
             if ($res->label_cluster === 'Laris') {
-                $judulNotif = 'Rekomendasi Tambah Stok';
-                $pesanNotif = "Suku cadang {$res->nama_barang} ({$res->kode_barang}) teridentifikasi Laris dengan total {$res->terjual} unit penjualan. Disarankan segera melakukan penambahan stok.";
-                $tipeNotif = 'restock';
-                $iconNotif = 'fa-boxes-packing';
-            } elseif ($res->label_cluster === 'Kurang Laris' && $res->terjual === 0 && $res->stok >= 30) {
+                
+                if ($currentStock <= $minStock) {
+                    // KONDISI A: Laris & Stok mencapai/di bawah Minimum Stock -> PERLU RESTOCK
+                    $kebutuhanRestock = $minStock - $currentStock;
+                    
+                    $judulNotif = 'Rekomendasi Tambah Stok';
+                    if ($kebutuhanRestock > 0) {
+                        $pesanNotif = "Suku cadang {$res->nama_barang} ({$res->kode_barang}) teridentifikasi Laris ({$res->terjual} terjual). Stok saat ini ({$currentStock}) di bawah batas minimum ({$minStock}). Disarankan menambah minimal {$kebutuhanRestock} unit.";
+                    } else {
+                        $pesanNotif = "Suku cadang {$res->nama_barang} ({$res->kode_barang}) teridentifikasi Laris ({$res->terjual} terjual). Stok saat ini ({$currentStock}) berada pada titik minimum ({$minStock}). Disarankan segera melakukan penambahan stok.";
+                    }
+                    $tipeNotif = 'restock';
+                    $iconNotif = 'fa-boxes-packing';
+
+                } else {
+                    // KONDISI B: Laris TAPI Stok Masih Aman (di atas Minimum Stock) -> HANYA INFO
+                    $judulNotif = 'Informasi Produk Laris';
+                    $pesanNotif = "Suku cadang {$res->nama_barang} ({$res->kode_barang}) teridentifikasi Laris dengan total {$res->terjual} unit penjualan. Stok saat ini aman ({$currentStock} unit).";
+                    $tipeNotif = 'info-laris'; // atau bisa pakai 'low-sales' / disesuaikan tipe badge CSS Anda
+                    $iconNotif = 'fa-fire';
+                }
+
+            } elseif ($res->label_cluster === 'Kurang Laris' && $res->terjual === 0 && $currentStock >= 30) {
                 $judulNotif = 'Stok Mengendap (Macet)';
-                $pesanNotif = "Stok menumpuk sebanyak {$res->stok} unit pada produk {$res->nama_barang} ({$res->kode_barang}) di gudang tanpa ada catatan transaksi penjualan.";
+                $pesanNotif = "Stok menumpuk sebanyak {$currentStock} unit pada produk {$res->nama_barang} ({$res->kode_barang}) di gudang tanpa ada catatan transaksi penjualan.";
                 $tipeNotif = 'overstock';
                 $iconNotif = 'fa-layer-group';
+
             } elseif ($res->label_cluster === 'Kurang Laris' && $res->terjual > 0) {
                 $judulNotif = 'Evaluasi Penjualan Rendah';
                 $pesanNotif = "Perputaran unit {$res->nama_barang} ({$res->kode_barang}) lambat, baru mencatatkan {$res->terjual} item penjualan.";
                 $tipeNotif = 'low-sales';
                 $iconNotif = 'fa-arrow-trend-down';
+
             } else {
                 continue;
             }
 
-            // 3. Simpan / Perbarui Notifikasi Menggunakan Komponen Token Multi-tenant Unik
+            // 3. Simpan / Perbarui Notifikasi
             DB::table('notifikasi')->updateOrInsert(
                 [
                     'user_id' => $adminId,

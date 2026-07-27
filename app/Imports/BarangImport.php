@@ -19,32 +19,30 @@ class BarangImport implements ToCollection
         }
 
         foreach ($rows as $row) {
-            // Skip kalau row tidak memiliki kolom yang cukup
             if (!$row || count($row) < 7) {
                 continue; 
             }
 
-            $namaBarang = $row[0];
-            $stok       = $row[1];
-            $satuan     = $row[2];
-            $hargaBeli  = $row[3];
-            $hargaJual  = $row[4];
-            $kategori   = $row[5];
-            $supplier   = $row[6] ?? '-';
+            $namaBarang   = $row[0];
+            $stok         = $row[1];
+            $minStock     = isset($row[2]) && is_numeric($row[2]) ? intval($row[2]) : 10; // Default 10 jika kosong
+            $satuan       = $row[3] ?? 'Pcs';
+            $hargaBeli    = $row[4] ?? 0;
+            $hargaJual    = $row[5] ?? 0;
+            $kategori     = $row[6] ?? 'Umum';
+            $supplier     = $row[7] ?? '-';
             
-            // Skip jika data nama_barang atau kategori ternyata kosong di baris ini
             if (empty(trim($namaBarang)) || empty(trim($kategori))) {
                 continue;
             }
 
             // Format tipe barang
-            $tipeRaw    = strtolower(trim($row[7] ?? 'stok'));
+            $tipeRaw    = strtolower(trim($row[8] ?? 'stok'));
             $tipeBarang = ($tipeRaw === 'non-stok' || $tipeRaw === 'non_stok' || $tipeRaw === 'non stok') ? 'non_stok' : 'stok';
 
             $prefix = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $kategori), 0, 3));
             $prefix = str_pad($prefix, 3, 'X'); 
 
-            // FIX 1: Cari kode barang terakhir HANYA milik user/bengkel yang sedang login
             $lastBarang = Barang::where('user_id', auth()->id())
                 ->where('kode_barang', 'like', $prefix . '%')
                 ->orderBy('kode_barang', 'desc')
@@ -59,18 +57,18 @@ class BarangImport implements ToCollection
 
             $kodeBarang = $prefix . $newNumber;
 
-            // FIX 2: Masukkan user_id ke dalam array creation data
             Barang::create([
-                'user_id'     => auth()->id(), // Mengunci kepemilikan data barang
-                'kode_barang' => $kodeBarang,
-                'nama_barang' => $namaBarang,
-                'tipe_barang' => $tipeBarang,
-                'stok'        => intval($stok),
-                'satuan'      => $satuan,
-                'harga_beli'  => intval($hargaBeli),
-                'harga_jual'  => intval($hargaJual),
-                'kategori'    => $kategori,
-                'supplier'    => $supplier,
+                'user_id'       => auth()->id(),
+                'kode_barang'   => $kodeBarang,
+                'nama_barang'   => $namaBarang,
+                'tipe_barang'   => $tipeBarang,
+                'stok'          => intval($stok),
+                'minimum_stock' => $minStock,
+                'satuan'        => $satuan,
+                'harga_beli'    => intval($hargaBeli),
+                'harga_jual'    => intval($hargaJual),
+                'kategori'      => $kategori,
+                'supplier'      => $supplier,
             ]);
         }
     }

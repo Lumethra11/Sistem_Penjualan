@@ -217,16 +217,19 @@ table td {
 .submit-form-btn:hover { background: var(--mb-primary-dark); }
 
 /* =========================================================
-   FORM LAYOUT, INPUT & AUTOCOMPLETE (FIXED LAYOUT MELAYANG)
+   FORM LAYOUT, INPUT & AUTOCOMPLETE
 ========================================================= */
 .divider-line { border: 0; border-top: 1px solid var(--mb-border); margin: 32px 0; }
 .required-star { color: var(--mb-danger); }
 .optional-label { font-weight: 400; color: #94A3B8; font-size: 12px; }
 .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+
+/* Grid 3 kolom untuk Stok, Minimum Stock & Satuan */
+.form-row.three-cols { grid-template-columns: repeat(3, 1fr); }
+
 .form-group { display: flex; flex-direction: column; margin-bottom: 20px; position: relative; }
 .form-group label { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #475569; }
 
-/* KUNCI UTAMA: Mengatur wrapper input agar menjadi jangkar posisi absolut dropdown */
 .input-wrapper { position: relative; width: 100%; }
 .input-wrapper input, .input-wrapper select {
     width: 100%; height: 44px; border: 1px solid var(--mb-border);
@@ -237,7 +240,6 @@ table td {
     border-color: var(--mb-primary); box-shadow: 0 0 0 3px rgba(47,91,211,0.15);
 }
 
-/* KUNCI UTAMA: Dropdown melayang (Absolute) & bisa discroll tanpa merusak form bawah */
 .autocomplete-items {
     position: absolute;
     border: 1px solid #D1D5DB;
@@ -249,8 +251,8 @@ table td {
     background-color: #FFFFFF;
     border-radius: 0 0 8px 8px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    max-height: 240px; /* Batasi tinggi drop-down list */
-    overflow-y: auto;  /* Mengaktifkan fitur scrollable murni */
+    max-height: 240px;
+    overflow-y: auto;
 }
 .autocomplete-item {
     padding: 12px 16px;

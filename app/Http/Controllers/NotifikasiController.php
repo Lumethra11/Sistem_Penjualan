@@ -105,19 +105,12 @@ class NotifikasiController extends Controller
         $user = auth()->user();
         $userId = $user->id;
         
-        $adminId = ($user->role === 'admin') ? $user->id : $user->admin_id;
-        
         $start = Carbon::now()->startOfWeek(Carbon::MONDAY);
         $end = Carbon::now()->endOfWeek(Carbon::SUNDAY);
         $periodeKey = $start->format('Ymd'); // Token penanda kode minggu berjalan
         
-        /**
-         * REFAKTORISASI UTAMA: Menggunakan KMeansService Terpusat
-         * Mengambil hasil kalkulasi terpusat yang sudah include normalisasi & standarisasi
-         */
         $dataset = app(KMeansService::class)->calculateKMeansRealtime($start, $end);
 
-        // Jika dataset kosong atau tidak memenuhi syarat minimum klasterisasi di service
         if (empty($dataset)) {
             return;
         }
@@ -125,8 +118,12 @@ class NotifikasiController extends Controller
         // Eksekusi penyimpanan data terstruktur ke dalam tabel 'notifikasi'
         foreach ($dataset as $item) {
             
-            // 1. Kondisi Stok Kritis / Habis (Batas operasional aman gudang)
-            if ($item['stok'] <= 2) {
+            // Ambil minimum_stock (default ke 1 jika tidak terdefinisi pada dataset)
+            $minStock = isset($item['minimum_stock']) ? intval($item['minimum_stock']) : 1;
+            $stokFisik = intval($item['stok']);
+
+            // 1. Kondisi Stok Kritis / Habis Total (Stok <= 0)
+            if ($stokFisik <= 0) {
                 Notifikasi::updateOrCreate(
                     [
                         'user_id' => $userId,
@@ -135,14 +132,19 @@ class NotifikasiController extends Controller
                     [
                         'tipe' => 'stok-out',
                         'icon' => 'fa-triangle-exclamation',
-                        'judul' => 'Stok Kritis / Habis',
-                        'pesan' => "Sisa stok produk {$item['nama']} ({$item['kode']}) tinggal {$item['stok']} item. Segera ajukan pemesanan ulang ke supplier."
+                        'judul' => 'Stok Habis Total',
+                        'pesan' => "Stok produk {$item['nama']} ({$item['kode']}) telah habis (0 item). Segera ajukan pemesanan ulang ke supplier."
                     ]
                 );
             }
             
-            // 2. Kondisi Hasil Cluster Laris (Rekomendasi Restock Berbasis K-Means)
-            if ($item['label'] === 'Laris') {
+            // 2. REVISI UTAMA: Rekomendasi Restock JIKA 'Laris' DAN Stok Fisik < Minimum Stock
+            // Beserta kalkulasi persis berapa jumlah item yang disarankan untuk dibeli
+            if ($item['label'] === 'Laris' && $stokFisik < $minStock) {
+                
+                // Selisih kebutuhan restock agar menyentuh batas minimum
+                $saranRestock = $minStock - $stokFisik;
+
                 Notifikasi::updateOrCreate(
                     [
                         'user_id' => $userId,
@@ -151,14 +153,14 @@ class NotifikasiController extends Controller
                     [
                         'tipe' => 'restock',
                         'icon' => 'fa-boxes-packing',
-                        'judul' => 'Rekomendasi Tambah Stok',
-                        'pesan' => "Produk {$item['nama']} ({$item['kode']}) terdeteksi Sangat Laku dengan total {$item['terjual']} item terjual minggu ini. Disarankan melakukan restock."
+                        'judul' => 'Rekomendasi Tambah Stok (Barang Laris)',
+                        'pesan' => "Produk {$item['nama']} ({$item['kode']}) terdeteksi LARIS ({$item['terjual']} item terjual). Sisa stok saat ini ({$stokFisik} item) berada di bawah batas minimum ({$minStock} item). Disarankan melakukan restock minimal {$saranRestock} item agar stok kembali aman."
                     ]
                 );
             }
             
             // 3. Kondisi Stok Mengendap / Overstock (Barang Macet di Gudang)
-            if ($item['label'] === 'Kurang Laris' && $item['terjual'] === 0 && $item['stok'] >= 30) {
+            if ($item['label'] === 'Kurang Laris' && $item['terjual'] === 0 && $stokFisik >= 30) {
                 Notifikasi::updateOrCreate(
                     [
                         'user_id' => $userId,
@@ -168,7 +170,7 @@ class NotifikasiController extends Controller
                         'tipe' => 'overstock',
                         'icon' => 'fa-layer-group',
                         'judul' => 'Stok Mengendap (Macet)',
-                        'pesan' => "Stok menumpuk sebanyak {$item['stok']} item pada produk {$item['nama']} ({$item['kode']}) di gudang tanpa ada catatan penjualan minggu ini."
+                        'pesan' => "Stok menumpuk sebanyak {$stokFisik} item pada produk {$item['nama']} ({$item['kode']}) di gudang tanpa ada catatan penjualan minggu ini."
                     ]
                 );
             }

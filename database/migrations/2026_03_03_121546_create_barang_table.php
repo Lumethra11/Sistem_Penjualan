@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('kategori');
             $table->string('supplier')->nullable();
             $table->enum('tipe_barang', ['stok', 'non_stok'])->default('stok');
+            $table->integer('minimum_stock')->default(1);
             $table->timestamps();
         });
     }

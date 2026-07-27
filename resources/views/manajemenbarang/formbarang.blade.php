@@ -35,8 +35,6 @@
                     <div class="input-wrapper">
                         <input type="text" name="nama_barang" id="inputNamaBarang" class="validate-me" placeholder="Masukkan nama barang" autocomplete="off">
                         <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        
-                        {{-- Container list autocomplete berada di dalam input-wrapper agar posisinya presisi melayang di bawah input --}}
                         <div id="autocompleteList" class="autocomplete-items"></div>
                     </div>
                     <span class="error-text">Field ini wajib diisi!</span>
@@ -52,7 +50,8 @@
                 </div>
             </div>
 
-            <div class="form-row">
+            {{-- BARIS DENGAN FIELD STOK & MINIMUM STOCK --}}
+            <div class="form-row three-cols">
                 <div class="form-group">
                     <label>Jumlah/Stok <span class="required-star">*</span></label>
                     <div class="input-wrapper">
@@ -60,6 +59,14 @@
                         <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     </div>
                     <span class="error-text">Stok tidak boleh kosong!</span>
+                </div>
+                <div class="form-group">
+                    <label>Minimum Stock <span class="required-star">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="number" name="minimum_stock" id="inputMinimumStock" class="validate-me" placeholder="1" value="1">
+                        <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    </div>
+                    <span class="error-text">Batas minimum wajib diisi!</span>
                 </div>
                 <div class="form-group">
                     <label>Satuan <span class="required-star">*</span></label>
@@ -133,7 +140,7 @@
 @endif
 
 <script>
-    const formFields = ['inputNamaBarang', 'inputTipeBarang', 'inputStok', 'inputSatuan', 'inputHargaBeli', 'inputHargaJual', 'inputKategori', 'inputSupplier'];
+    const formFields = ['inputNamaBarang', 'inputTipeBarang', 'inputStok', 'inputMinimumStock', 'inputSatuan', 'inputHargaBeli', 'inputHargaJual', 'inputKategori', 'inputSupplier'];
 
     window.addEventListener('DOMContentLoaded', () => {
         formFields.forEach(fieldId => {
@@ -182,6 +189,7 @@
                         div.addEventListener('click', function() {
                             namaInput.value = item.nama_barang;
                             document.getElementById('inputTipeBarang').value = item.tipe_barang;
+                            document.getElementById('inputMinimumStock').value = item.minimum_stock ?? 1;
                             document.getElementById('inputSatuan').value = item.satuan;
                             document.getElementById('inputHargaBeli').value = item.harga_beli;
                             document.getElementById('inputHargaJual').value = item.harga_jual;

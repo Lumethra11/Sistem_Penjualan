@@ -16,7 +16,6 @@ class ManajemenBarangController extends Controller
         $search = $request->input('search');
         $tipe = $request->input('tipe', 'stok'); 
         
-        // Mengunci query hanya untuk data milik user yang sedang login
         $query = Barang::where('user_id', auth()->id())
             ->where('tipe_barang', $tipe)
             ->latest();
@@ -49,11 +48,10 @@ class ManajemenBarangController extends Controller
             return response()->json([]);
         }
 
-        // Hanya merekomendasikan barang milik bengkel user tersebut
         $barang = Barang::where('user_id', auth()->id())
             ->where('nama_barang', 'like', '%' . $term . '%')
             ->limit(10)
-            ->get(['id', 'nama_barang', 'tipe_barang', 'satuan', 'harga_beli', 'harga_jual', 'kategori', 'supplier']);
+            ->get(['id', 'nama_barang', 'tipe_barang', 'satuan', 'minimum_stock', 'harga_beli', 'harga_jual', 'kategori', 'supplier']);
 
         return response()->json($barang);
     }
@@ -65,7 +63,6 @@ class ManajemenBarangController extends Controller
         $prefix = strtoupper(substr($cleanKategori, 0, 3));
         $prefix = str_pad($prefix, 3, 'X');
 
-        // Menghindari bentrokan counter urutan dengan bengkel lain
         $lastBarang = Barang::where('user_id', auth()->id())
             ->where('kode_barang', 'like', $prefix . '%')
             ->orderBy('kode_barang', 'desc')
@@ -82,24 +79,24 @@ class ManajemenBarangController extends Controller
         return $prefix . $formattedNumber;
     }
 
-    // STORE BARANG (LOGIKA ACCUMULATION JIKA NAMA & TIPE SAMA)
+    // STORE BARANG
     public function store(Request $request)
     {
         $request->validate([
-            'nama_barang' => 'required|string|max:255',
-            'tipe_barang' => 'required|in:stok,non_stok',
-            'stok'        => 'required|integer|min:0',
-            'satuan'      => 'required|string|max:100',
-            'harga_beli'  => 'required|integer|min:0',
-            'harga_jual'  => 'required|integer|min:0',
-            'kategori'    => 'required|string|max:255',
-            'supplier'    => 'nullable|string|max:255',
+            'nama_barang'    => 'required|string|max:255',
+            'tipe_barang'    => 'required|in:stok,non_stok',
+            'stok'           => 'required|integer|min:0',
+            'minimum_stock'  => 'required|integer|min:0',
+            'satuan'         => 'required|string|max:100',
+            'harga_beli'     => 'required|integer|min:0',
+            'harga_jual'     => 'required|integer|min:0',
+            'kategori'       => 'required|string|max:255',
+            'supplier'       => 'nullable|string|max:255',
         ]);
 
         DB::beginTransaction();
 
         try {
-            // Pastikan pengecekan barang eksis terkunci ke user_id
             $barangEksis = Barang::where('user_id', auth()->id())
                 ->where('nama_barang', $request->nama_barang)
                 ->where('tipe_barang', $request->tipe_barang)
@@ -111,15 +108,15 @@ class ManajemenBarangController extends Controller
                 $stokBaru = $stokLama + $tambahStok;
 
                 $barangEksis->update([
-                    'stok' => $stokBaru,
-                    'harga_beli' => $request->harga_beli,
-                    'harga_jual' => $request->harga_jual,
-                    'satuan' => $request->satuan,
-                    'kategori' => $request->kategori,
-                    'supplier' => $request->supplier,
+                    'stok'          => $stokBaru,
+                    'minimum_stock' => $request->minimum_stock,
+                    'harga_beli'    => $request->harga_beli,
+                    'harga_jual'    => $request->harga_jual,
+                    'satuan'        => $request->satuan,
+                    'kategori'      => $request->kategori,
+                    'supplier'      => $request->supplier,
                 ]);
 
-                // FIX: Menambahkan user_id milik admin yang sedang login
                 DB::table('histori_stok')->insert([
                     'user_id'            => auth()->id(),
                     'barang_id'          => $barangEksis->id,
@@ -139,21 +136,20 @@ class ManajemenBarangController extends Controller
 
             $kodeBarang = $this->generateKodeBarang($request->kategori);
 
-            // Wajib menyertakan user_id saat pendaftaran barang baru
             $barang = Barang::create([
-                'user_id'     => auth()->id(),
-                'kode_barang' => $kodeBarang,
-                'nama_barang' => $request->nama_barang,
-                'tipe_barang' => $request->tipe_barang,
-                'stok'        => $request->stok,
-                'satuan'      => $request->satuan,
-                'harga_beli'  => $request->harga_beli,
-                'harga_jual'  => $request->harga_jual,
-                'kategori'    => $request->kategori,
-                'supplier'    => $request->supplier,
+                'user_id'       => auth()->id(),
+                'kode_barang'   => $kodeBarang,
+                'nama_barang'   => $request->nama_barang,
+                'tipe_barang'   => $request->tipe_barang,
+                'stok'          => $request->stok,
+                'minimum_stock' => $request->minimum_stock,
+                'satuan'        => $request->satuan,
+                'harga_beli'    => $request->harga_beli,
+                'harga_jual'    => $request->harga_jual,
+                'kategori'      => $request->kategori,
+                'supplier'      => $request->supplier,
             ]);
 
-            // FIX: Menambahkan user_id milik admin yang sedang login
             DB::table('histori_stok')->insert([
                 'user_id'            => auth()->id(),
                 'barang_id'          => $barang->id,
@@ -176,40 +172,40 @@ class ManajemenBarangController extends Controller
         }
     }
 
-    // UPDATE BARANG STOK (Scoped to User)
+    // UPDATE BARANG STOK
     public function update(Request $request, $id)
     {
         $request->validate([
-            'nama_barang' => 'required|string|max:255',
-            'stok'        => 'required|integer|min:0',
-            'satuan'      => 'required|string|max:100',
-            'harga_beli'  => 'required|integer|min:0',
-            'harga_jual'  => 'required|integer|min:0',
-            'kategori'    => 'required|string|max:255',
-            'supplier'    => 'nullable|string|max:255',
+            'nama_barang'    => 'required|string|max:255',
+            'stok'           => 'required|integer|min:0',
+            'minimum_stock'  => 'required|integer|min:0',
+            'satuan'         => 'required|string|max:100',
+            'harga_beli'     => 'required|integer|min:0',
+            'harga_jual'     => 'required|integer|min:0',
+            'kategori'       => 'required|string|max:255',
+            'supplier'       => 'nullable|string|max:255',
         ]);
 
         DB::beginTransaction();
         try {
-            // Menggunakan where user_id sebelum findOrFail untuk mencegah modifikasi data ilegal
             $barang = Barang::where('user_id', auth()->id())->findOrFail($id);
             $stokLama = $barang->stok;
             $stokBaru = intval($request->stok);
 
             $barang->update([
-                'nama_barang' => $request->nama_barang,
-                'stok'        => $stokBaru,
-                'satuan'      => $request->satuan,
-                'harga_beli'  => $request->harga_beli,
-                'harga_jual'  => $request->harga_jual,
-                'kategori'    => $request->kategori,
-                'supplier'    => $request->supplier,
+                'nama_barang'   => $request->nama_barang,
+                'stok'          => $stokBaru,
+                'minimum_stock' => $request->minimum_stock,
+                'satuan'        => $request->satuan,
+                'harga_beli'    => $request->harga_beli,
+                'harga_jual'    => $request->harga_jual,
+                'kategori'      => $request->kategori,
+                'supplier'      => $request->supplier,
             ]);
 
             if ($stokLama != $stokBaru) {
                 $selisih = $stokBaru - $stokLama;
                 
-                // FIX: Menambahkan user_id milik admin yang sedang login
                 DB::table('histori_stok')->insert([
                     'user_id'            => auth()->id(),
                     'barang_id'          => $barang->id,
@@ -233,7 +229,7 @@ class ManajemenBarangController extends Controller
         }
     }
 
-    // PINDAH KELOMPOK BARANG (Scoped to User)
+    // PINDAH KELOMPOK BARANG
     public function pindahKeStok($id)
     {
         DB::beginTransaction();
@@ -245,7 +241,6 @@ class ManajemenBarangController extends Controller
                 'stok' => 0 
             ]);
 
-            // FIX: Menambahkan user_id milik admin yang sedang login
             DB::table('histori_stok')->insert([
                 'user_id'            => auth()->id(),
                 'barang_id'          => $barang->id,
@@ -268,7 +263,7 @@ class ManajemenBarangController extends Controller
         }
     }
 
-    // DESTROY (Scoped to User)
+    // DESTROY
     public function destroy($id)
     {
         $barang = Barang::where('user_id', auth()->id())->findOrFail($id);

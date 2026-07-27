@@ -97,13 +97,11 @@
         let liveNotifs = [];
 
         function loadNavbarNotifs() {
-            let readItems = JSON.parse(localStorage.getItem('read_notif_ids') || "[]");
-
             fetch("{{ route('api.notifikasi') }}")
                 .then(response => response.json())
                 .then(res => {
                     if(res.status === 'success') {
-                        liveNotifs = res.data.filter(item => !readItems.includes(item.id_item));
+                        liveNotifs = res.data;
                         countText.innerText = liveNotifs.length + " Baru";
                         
                         if(liveNotifs.length > 0) {
@@ -144,16 +142,31 @@
                 });
         }
 
+        // FUNGSI UTAMA: MENGIRIM STATUS BACA KE DATABASE VIA AJAX
         function dismissNavbarNotif(id) {
-            let readItems = JSON.parse(localStorage.getItem('read_notif_ids') || "[]");
-            if(!readItems.includes(id)) {
-                readItems.push(id);
-                localStorage.setItem('read_notif_ids', JSON.stringify(readItems));
-            }
-            document.getElementById('pop-' + id)?.remove();
-            liveNotifs = liveNotifs.filter(item => item.id_item !== id);
-            countText.innerText = liveNotifs.length + " Baru";
-            if(liveNotifs.length === 0) { redDot.style.display = 'none'; containerList.innerHTML = '<div class="notif-empty-state">Tidak ada notifikasi baru.</div>'; }
+            let token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
+            fetch(`/notifikasi/mark-read/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token
+                }
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.status === 'success') {
+                    document.getElementById('pop-' + id)?.remove();
+                    liveNotifs = liveNotifs.filter(item => item.id_item !== id);
+                    countText.innerText = liveNotifs.length + " Baru";
+                    
+                    if(liveNotifs.length === 0) { 
+                        redDot.style.display = 'none'; 
+                        containerList.innerHTML = '<div class="notif-empty-state">Tidak ada notifikasi baru.</div>'; 
+                    }
+                }
+            })
+            .catch(err => console.error("Gagal update status baca database:", err));
         }
 
         bellBtn.addEventListener('click', function(e) {
