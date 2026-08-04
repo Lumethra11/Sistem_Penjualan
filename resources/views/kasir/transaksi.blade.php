@@ -3,10 +3,52 @@
 @section('content')
 @vite('resources/css/pages/kasir.css')
 
-<!-- CDN jQuery & Select2 (CSS & JS) untuk Search inside Dropdown Menu -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- CDN jQuery & Tom Select -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+<style>
+/* Styling Tom Select agar presisi & simetris dengan Layout Kasir */
+.ts-control {
+    height: 44px !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--ks-border) !important;
+    padding: 0 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    font-size: 14px !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+}
+.ts-wrapper.focus .ts-control {
+    border-color: var(--ks-primary-light) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+.ts-dropdown {
+    border-radius: 8px !important;
+    border: 1px solid var(--ks-border) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    margin-top: 4px !important;
+    z-index: 9999 !important;
+}
+.ts-dropdown .option {
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+}
+.ts-dropdown .active {
+    background-color: #F1F5F9 !important;
+    color: var(--ks-primary) !important;
+    font-weight: 600 !important;
+}
+.ts-dropdown .option[data-disabled] {
+    color: #EF4444 !important;
+    background-color: #FEF2F2 !important;
+    font-weight: 600 !important;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+</style>
 
 <div class="kasir-container">
     <div class="kasir-header">
@@ -72,8 +114,7 @@
                     <h3>Tambah Barang Stok</h3>
                     <div class="dropdown-row-grid">
                         <div class="select-wrapper">
-                            <select id="selectBarangStok" class="select2-kasir">
-                                <option value="">Pilih Barang Stok</option>
+                            <select id="selectBarangStok" placeholder="Pilih / Cari Barang Stok...">
                                 @foreach($barangStok as $barang)
                                     <option value="{{ $barang->id }}" 
                                             data-nama="{{ $barang->nama_barang }}" 
@@ -94,8 +135,7 @@
                     <h3>Tambah Barang Non Stok</h3>
                     <div class="dropdown-row-grid">
                         <div class="select-wrapper">
-                            <select id="selectBarangNonStok" class="select2-kasir">
-                                <option value="">Pilih Barang Non Stok</option>
+                            <select id="selectBarangNonStok" placeholder="Pilih / Cari Barang Non Stok...">
                                 @foreach($barangNonStok as $barang)
                                     <option value="{{ $barang->id }}" 
                                             data-nama="{{ $barang->nama_barang }}" 
@@ -232,30 +272,27 @@
 <script>
     const draftsData = @json($drafts);
     let cartIndex = 0;
+    let tsStok, tsNonStok;
 
     $(document).ready(function() {
-        // Inisialisasi Select2 dengan Search Field DI DALAM Dropdown Menu
-        $('#selectBarangStok').select2({
-            placeholder: "Pilih Barang Stok",
-            allowClear: true,
-            width: '100%',
-            language: {
-                noResults: function() {
-                    return "Barang tidak ditemukan";
-                }
-            }
+        // Inisialisasi Tom Select dengan konfigurasi bersih
+        tsStok = new TomSelect('#selectBarangStok', {
+            create: false,
+            maxItems: 1,
+            placeholder: "Pilih / Cari Barang Stok...",
+            noResultsMessage: "Barang tidak ditemukan"
         });
 
-        $('#selectBarangNonStok').select2({
-            placeholder: "Pilih Barang Non Stok",
-            allowClear: true,
-            width: '100%',
-            language: {
-                noResults: function() {
-                    return "Barang tidak ditemukan";
-                }
-            }
+        tsNonStok = new TomSelect('#selectBarangNonStok', {
+            create: false,
+            maxItems: 1,
+            placeholder: "Pilih / Cari Barang Non Stok...",
+            noResultsMessage: "Barang tidak ditemukan"
         });
+
+        // Kosongkan nilai bawaan agar memunculkan placeholder bersih
+        tsStok.clear();
+        tsNonStok.clear();
     });
 
     function toggleMetodePembayaran() {
@@ -328,28 +365,29 @@
     }
 
     function addBarangToTable(selectElementId) {
-        let select = $('#' + selectElementId);
-        let selectedValue = select.val();
+        let tsInstance = selectElementId === 'selectBarangStok' ? tsStok : tsNonStok;
+        let selectedValue = tsInstance.getValue();
         
         if(!selectedValue || selectedValue === "") return alert("Pilih barang terlebih dahulu!");
 
-        let option = select.find(':selected');
+        let selectElem = document.getElementById(selectElementId);
+        let option = selectElem.querySelector(`option[value="${selectedValue}"]`);
         
-        if(option.is(':disabled')) {
+        if(option && option.hasAttribute('disabled')) {
             alert("Barang ini tidak dapat dipilih karena stok di toko sudah habis (0)!");
-            select.val(null).trigger('change');
+            tsInstance.clear();
             return;
         }
 
         renderRowHtml({
             id: selectedValue,
-            nama: option.data('nama'),
-            harga: parseFloat(option.data('harga')) || 0,
-            harga_beli: parseFloat(option.data('harga-beli')) || 0,
+            nama: option.getAttribute('data-nama'),
+            harga: parseFloat(option.getAttribute('data-harga')) || 0,
+            harga_beli: parseFloat(option.getAttribute('data-harga-beli')) || 0,
             qty: 1
         }, false);
         
-        select.val(null).trigger('change');
+        tsInstance.clear();
     }
 
     function addManualToTable() {
@@ -464,8 +502,8 @@
         document.querySelectorAll('tr[id^="row-"]').forEach(tr => tr.remove());
         document.getElementById('emptyRow').style.display = '';
 
-        $('#selectBarangStok').val(null).trigger('change');
-        $('#selectBarangNonStok').val(null).trigger('change');
+        if(tsStok) tsStok.clear();
+        if(tsNonStok) tsNonStok.clear();
 
         toggleMetodePembayaran();
         kalkulasiTotal();
