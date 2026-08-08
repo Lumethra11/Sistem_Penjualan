@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-BLEDmdQm.css",
+    "file": "assets/app-OLJ2C-9O.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -35,6 +35,15 @@
       "register.css"
     ]
   },
+  "resources/css/notifikasi.css": {
+    "file": "assets/notifikasi-DFY2xTOC.css",
+    "src": "resources/css/notifikasi.css",
+    "isEntry": true,
+    "name": "notifikasi",
+    "names": [
+      "notifikasi.css"
+    ]
+  },
   "resources/css/pages/dashboard.css": {
     "file": "assets/dashboard-BlHa3iaj.css",
     "src": "resources/css/pages/dashboard.css",
@@ -45,7 +54,7 @@
     ]
   },
   "resources/css/pages/kasir.css": {
-    "file": "assets/kasir-BYuc8XVO.css",
+    "file": "assets/kasir-B2-6kYdd.css",
     "src": "resources/css/pages/kasir.css",
     "isEntry": true,
     "name": "kasir",
@@ -72,7 +81,7 @@
     ]
   },
   "resources/css/pages/manajemenbarang.css": {
-    "file": "assets/manajemenbarang-D-r3B-OY.css",
+    "file": "assets/manajemenbarang-Bk5R89LR.css",
     "src": "resources/css/pages/manajemenbarang.css",
     "isEntry": true,
     "name": "manajemenbarang",
@@ -90,7 +99,7 @@
     ]
   },
   "resources/css/welcome.css": {
-    "file": "assets/welcome-BrfGGuxL.css",
+    "file": "assets/welcome-BGbygrwP.css",
     "src": "resources/css/welcome.css",
     "isEntry": true,
     "name": "welcome",
