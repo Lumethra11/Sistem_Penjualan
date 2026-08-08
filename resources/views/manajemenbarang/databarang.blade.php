@@ -32,70 +32,73 @@
     </div>
 
     <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 60px; text-align: center;">No</th>
-                    <th>Kode</th>
-                    <th>Nama Barang</th>
-                    <th>Kategori</th>
-                    <th>Stok</th>
-                    <th>Satuan</th>
-                    <th>Harga Beli</th>
-                    <th>Harga Jual</th>
-                    <th>Supplier</th>
-                    <th class="text-center-th">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($barang as $item)
-                <tr>
-                    <td style="text-align: center; font-weight: 600; color: #64748B;">
-                        {{ ($barang->currentPage() - 1) * $barang->perPage() + $loop->iteration }}
-                    </td>
-                    <td>{{ $item->kode_barang }}</td>
-                    <td>{{ $item->nama_barang }}</td>
-                    <td>{{ $item->kategori }}</td>
-                    <td>{{ $item->stok }}</td>
-                    <td>{{ $item->satuan }}</td>
-                    <td>Rp. {{ number_format($item->harga_beli,0,',','.') }}</td>
-                    <td>Rp. {{ number_format($item->harga_jual,0,',','.') }}</td>
-                    <td>{{ $item->supplier ?? '-' }}</td>
-                    <td>
-                        <div class="action-buttons">
-                            @if($tipe == 'stok')
-                                <button type="button" class="btn-icon edit" onclick="openEditModal({{ json_encode($item) }})" title="Edit">
-                                    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                </button>
-                            @else
-                                <form action="/manajemenbarang/{{ $item->id }}/pindah" method="POST" class="inline-form">
+        {{-- Wrapper ini mencegah tabel terpotong keluar layar --}}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px; text-align: center;">No</th>
+                        <th>Kode</th>
+                        <th>Nama Barang</th>
+                        <th>Kategori</th>
+                        <th>Stok</th>
+                        <th>Satuan</th>
+                        <th>Harga Beli</th>
+                        <th>Harga Jual</th>
+                        <th>Supplier</th>
+                        <th class="text-center-th">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($barang as $item)
+                    <tr>
+                        <td style="text-align: center; font-weight: 600; color: #64748B;">
+                            {{ ($barang->currentPage() - 1) * $barang->perPage() + $loop->iteration }}
+                        </td>
+                        <td><strong>{{ $item->kode_barang }}</strong></td>
+                        <td>{{ $item->nama_barang }}</td>
+                        <td>{{ $item->kategori }}</td>
+                        <td>{{ $item->stok }}</td>
+                        <td>{{ $item->satuan }}</td>
+                        <td>Rp {{ number_format($item->harga_beli,0,',','.') }}</td>
+                        <td>Rp {{ number_format($item->harga_jual,0,',','.') }}</td>
+                        <td>{{ $item->supplier ?? '-' }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                @if($tipe == 'stok')
+                                    <button type="button" class="btn-icon edit" onclick="openEditModal({{ json_encode($item) }})" title="Edit">
+                                        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                @else
+                                    <form action="/manajemenbarang/{{ $item->id }}/pindah" method="POST" class="inline-form">
+                                        @csrf
+                                        <button type="submit" class="btn-icon move" title="Pindahkan ke tipe Stok">
+                                            <svg viewBox="0 0 24 24"><path d="M17 21v-4H7v-2h10v-4l5 5zM7 3v4h10v2H7v4l-5-5z"/></svg>
+                                        </button>
+                                    </form>
+                                @endif
+                                
+                                <form action="{{ route('manajemenbarang.destroy', $item->id) }}" method="POST" onsubmit="confirmDelete(event, this);">
                                     @csrf
-                                    <button type="submit" class="btn-icon move" title="Pindahkan ke tipe Stok">
-                                        <svg viewBox="0 0 24 24"><path d="M17 21v-4H7v-2h10v-4l5 5zM7 3v4h10v2H7v4l-5-5z"/></svg>
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-icon delete" title="Hapus">
+                                        <svg viewBox="0 0 24 24">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
                                     </button>
                                 </form>
-                            @endif
-                            
-                            <form action="{{ route('manajemenbarang.destroy', $item->id) }}" method="POST" onsubmit="confirmDelete(event, this);">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn-icon delete" title="Hapus">
-                                    <svg viewBox="0 0 24 24">
-                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                    </svg>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="10" class="text-muted-empty">Data barang tidak ditemukan.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="10" class="text-muted-empty">Data barang tidak ditemukan.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
         
         <div class="pagination-wrapper">
             {{ $barang->links('pagination::bootstrap-5') }}

@@ -50,7 +50,6 @@
                 </div>
             </div>
 
-            {{-- BARIS DENGAN FIELD STOK & MINIMUM STOCK --}}
             <div class="form-row three-cols">
                 <div class="form-group">
                     <label>Jumlah/Stok <span class="required-star">*</span></label>

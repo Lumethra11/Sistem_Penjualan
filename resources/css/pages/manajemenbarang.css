@@ -1,5 +1,5 @@
 /* =========================================================
-   ROOT VARIABLES KHUSUS HALAMAN
+   ROOT VARIABLES
 ========================================================= */
 :root {
     --mb-primary: #2F5BD3;
@@ -31,7 +31,7 @@
 }
 
 /* =========================================================
-   TOP BAR & TABS (Navigasi Utama)
+   TOP BAR & TABS
 ========================================================= */
 .top-bar {
     display: flex;
@@ -45,7 +45,7 @@
 .tab-container {
     display: flex;
     gap: 12px;
-    margin-bottom: 20px; 
+    flex-wrap: wrap;
 }
 
 .tab-button {
@@ -58,6 +58,8 @@
     font-size: 14px;
     font-weight: 600;
     transition: 0.2s;
+    display: inline-block;
+    text-align: center;
 }
 
 .tab-button:hover { background: #f8fafc; }
@@ -68,13 +70,15 @@
 }
 
 /* =========================================================
-   FILTER TABS (Filter Tipe Barang - Underline Design)
+   FILTER TABS
 ========================================================= */
 .filter-tabs {
     display: flex;
     gap: 32px;
     border-bottom: 2px solid #F1F5F9;
     margin-bottom: 24px;
+    overflow-x: auto;
+    white-space: nowrap;
 }
 
 .filter-btn {
@@ -104,61 +108,110 @@
 /* =========================================================
    SEARCH BAR
 ========================================================= */
-.search-form { display: flex; gap: 8px; }
+.search-form { 
+    display: flex; 
+    gap: 8px; 
+    width: auto;
+    flex-wrap: wrap;
+}
 .search-form input {
-    height: 40px; border: 1px solid var(--mb-border);
-    border-radius: 8px; padding: 0 16px; outline: none;
-    font-size: 14px; min-width: 280px; transition: 0.2s;
+    height: 40px; 
+    border: 1px solid var(--mb-border);
+    border-radius: 8px; 
+    padding: 0 16px; 
+    outline: none;
+    font-size: 14px; 
+    width: 280px; 
+    max-width: 100%;
+    transition: 0.2s;
+    box-sizing: border-box;
 }
 .search-form input:focus { 
     border-color: var(--mb-primary); 
     box-shadow: 0 0 0 3px rgba(47,91,211,0.10);
 }
 .search-form button {
-    background: var(--mb-primary); color: #fff; border: none;
-    padding: 0 20px; border-radius: 8px; cursor: pointer;
-    font-weight: 600; font-size: 14px; transition: 0.2s;
+    background: var(--mb-primary); 
+    color: #fff; 
+    border: none;
+    padding: 0 20px; 
+    height: 40px;
+    border-radius: 8px; 
+    cursor: pointer;
+    font-weight: 600; 
+    font-size: 14px; 
+    transition: 0.2s;
 }
 .search-form button:hover { background: var(--mb-primary-dark); }
 
 /* =========================================================
-   CARD (KOTAK PUTIH KONTEN)
+   CARD & TABLE RESPONSIVE
 ========================================================= */
 .table-container, .form-container {
-    background: var(--mb-card); border-radius: 12px;
-    padding: 32px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    background: var(--mb-card); 
+    border-radius: 12px;
+    padding: 32px; 
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
     border: 1px solid var(--mb-border);
+    box-sizing: border-box;
 }
 
-/* =========================================================
-   TABLE
-========================================================= */
-table { width: 100%; border-collapse: collapse; }
+/* RESPONSIVE TABLE WRAPPER (FIX UTAMA AGAR TAMPILAN TIDAK TERPOTONG) */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    min-width: 850px; /* Menjamin lebar minimum tabel tetap rapi saat di-scroll */
+}
 table thead tr { border-bottom: 1px solid var(--mb-border); }
 table th {
-    text-align: left; padding: 14px 16px; font-size: 13px;
-    font-weight: 600; color: #64748B; background: #F8FAFC;
+    text-align: left; 
+    padding: 14px 16px; 
+    font-size: 13px;
+    font-weight: 600; 
+    color: #64748B; 
+    background: #F8FAFC;
+    white-space: nowrap;
 }
 table th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
 table th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
 table td {
-    padding: 16px; border-bottom: 1px solid #F1F5F9;
-    font-size: 14px; color: #334155; vertical-align: middle;
+    padding: 16px; 
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 14px; 
+    color: #334155; 
+    vertical-align: middle;
+    white-space: nowrap;
 }
 .text-center-th { text-align: center; }
 .text-muted-empty { text-align: center; color: #64748B; }
 
 /* =========================================================
-   ACTION BUTTONS (EDIT/DELETE/MOVE)
+   ACTION BUTTONS
 ========================================================= */
 .action-buttons {
-    display: flex; gap: 8px; justify-content: center; align-items: center;
+    display: flex; 
+    gap: 8px; 
+    justify-content: center; 
+    align-items: center;
 }
 .inline-form { display: inline; }
 .btn-icon {
-    width: 36px; height: 36px; border: none; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: 0.2s; color: #fff;
+    width: 36px; 
+    height: 36px; 
+    border: none; 
+    border-radius: 10px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    cursor: pointer; 
+    transition: 0.2s; 
+    color: #fff;
 }
 .btn-icon.edit { background: var(--mb-success); }
 .btn-icon.edit:hover { background: #16a34a; transform: translateY(-2px); }
@@ -172,27 +225,43 @@ table td {
    UPLOAD WRAPPER
 ========================================================= */
 .upload-wrapper {
-    display: flex; align-items: center; flex-wrap: wrap; gap: 16px;
-    background: #FAFAFA; padding: 24px; border-radius: 12px;
+    display: flex; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    gap: 16px;
+    background: #FAFAFA; 
+    padding: 24px; 
+    border-radius: 12px;
     border: 2px dashed #E2E8F0;
 }
 .upload-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .hidden-input { display: none; }
 .choose-file-btn {
-    background: #fff; border: 1px solid var(--mb-border); padding: 10px 18px;
-    border-radius: 8px; font-size: 13px; cursor: pointer;
-    font-weight: 600; color: var(--mb-text); transition: 0.2s;
+    background: #fff; 
+    border: 1px solid var(--mb-border); 
+    padding: 10px 18px;
+    border-radius: 8px; 
+    font-size: 13px; 
+    cursor: pointer;
+    font-weight: 600; 
+    color: var(--mb-text); 
+    transition: 0.2s;
 }
 .choose-file-btn:hover { border-color: var(--mb-primary); color: var(--mb-primary); }
 .file-name-text { font-size: 13px; color: #64748B; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* =========================================================
-   BUTTONS UMUM & FORM ACTIONS
+   BUTTONS & FORM ACTIONS
 ========================================================= */
 .download-btn, .upload-btn, .submit-btn, .submit-btn-update {
-    padding: 10px 20px; border-radius: 8px; font-size: 13px;
-    font-weight: 600; cursor: pointer; transition: 0.2s;
-    text-decoration: none; border: none;
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    font-size: 13px;
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: 0.2s;
+    text-decoration: none; 
+    border: none;
 }
 .download-btn { background: #fff; border: 1px solid var(--mb-border); color: var(--mb-text); }
 .download-btn:hover { background: #f8fafc; }
@@ -206,13 +275,31 @@ table td {
 
 .form-action-container { display: flex; gap: 16px; }
 .clear-form-btn {
-    background: #fff; border: 1px solid var(--mb-danger); color: var(--mb-danger);
-    width: 30%; margin-top: 16px; padding: 16px; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s;
+    background: #fff; 
+    border: 1px solid var(--mb-danger); 
+    color: var(--mb-danger);
+    width: 30%; 
+    margin-top: 16px; 
+    padding: 16px; 
+    font-size: 15px; 
+    font-weight: 600; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    transition: 0.2s;
 }
 .clear-form-btn:hover { background: #FEF2F2; }
 .submit-form-btn {
-    background: var(--mb-primary); color: #fff; border: none;
-    width: 70%; margin-top: 16px; padding: 16px; font-size: 15px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: 0.2s;
+    background: var(--mb-primary); 
+    color: #fff; 
+    border: none;
+    width: 70%; 
+    margin-top: 16px; 
+    padding: 16px; 
+    font-size: 15px; 
+    font-weight: 600; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    transition: 0.2s;
 }
 .submit-form-btn:hover { background: var(--mb-primary-dark); }
 
@@ -222,9 +309,8 @@ table td {
 .divider-line { border: 0; border-top: 1px solid var(--mb-border); margin: 32px 0; }
 .required-star { color: var(--mb-danger); }
 .optional-label { font-weight: 400; color: #94A3B8; font-size: 12px; }
-.form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
 
-/* Grid 3 kolom untuk Stok, Minimum Stock & Satuan */
+.form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
 .form-row.three-cols { grid-template-columns: repeat(3, 1fr); }
 
 .form-group { display: flex; flex-direction: column; margin-bottom: 20px; position: relative; }
@@ -232,12 +318,21 @@ table td {
 
 .input-wrapper { position: relative; width: 100%; }
 .input-wrapper input, .input-wrapper select {
-    width: 100%; height: 44px; border: 1px solid var(--mb-border);
-    border-radius: 8px; padding: 0 16px; font-size: 14px;
-    background: #fff; outline: none; transition: 0.2s; color: var(--mb-text);
+    width: 100%; 
+    height: 44px; 
+    border: 1px solid var(--mb-border);
+    border-radius: 8px; 
+    padding: 0 16px; 
+    font-size: 14px;
+    background: #fff; 
+    outline: none; 
+    transition: 0.2s; 
+    color: var(--mb-text);
+    box-sizing: border-box;
 }
 .input-wrapper input:focus, .input-wrapper select:focus {
-    border-color: var(--mb-primary); box-shadow: 0 0 0 3px rgba(47,91,211,0.15);
+    border-color: var(--mb-primary); 
+    box-shadow: 0 0 0 3px rgba(47,91,211,0.15);
 }
 
 .autocomplete-items {
@@ -272,9 +367,11 @@ table td {
     font-weight: 400;
 }
 
-/* Error States Input Validation */
+/* Error States */
 .input-wrapper.error input, .input-wrapper.error select {
-    border-color: var(--mb-danger); box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); padding-right: 40px;
+    border-color: var(--mb-danger); 
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); 
+    padding-right: 40px;
 }
 .error-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--mb-danger); display: none; pointer-events: none; }
 .input-wrapper.error .error-icon { display: block; }
@@ -282,37 +379,40 @@ table td {
 .input-wrapper.error + .error-text { display: block; }
 
 /* =========================================================
-   PAGINATION DESIGN
+   PAGINATION
 ========================================================= */
 .pagination-wrapper { margin-top: 32px; display: flex; justify-content: flex-end; width: 100%; }
-.pagination-wrapper nav { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.pagination-wrapper nav { display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 16px; }
 .pagination-wrapper nav > div:first-child { display: none; }
-.pagination-wrapper nav > div:last-child { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.pagination-wrapper nav > div:last-child { display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 16px; }
 .pagination-wrapper p { margin: 0; font-size: 13px; color: #64748B; font-weight: 500; }
-.pagination { display: flex; list-style: none; gap: 6px; padding: 0; margin: 0; }
+.pagination { display: flex; list-style: none; gap: 6px; padding: 0; margin: 0; flex-wrap: wrap; }
 .pagination li a, .pagination li span {
     display: flex; align-items: center; justify-content: center; min-width: 36px; height: 36px;
     padding: 0 10px; background: #fff; border: 1px solid var(--mb-border); border-radius: 8px;
     font-size: 14px; font-weight: 600; color: #475569; text-decoration: none; transition: 0.2s;
+    box-sizing: border-box;
 }
 .pagination li a:hover { background: #f8fafc; border-color: var(--mb-primary); color: var(--mb-primary); }
 .pagination li.active span { background: var(--mb-primary); color: #fff; border-color: var(--mb-primary); }
 .pagination li.disabled span { background: #f1f5f9; color: #cbd5e1; border-color: var(--mb-border); cursor: not-allowed; }
 
 /* =========================================================
-   MODAL WINDOW DIALOGS
+   MODALS
 ========================================================= */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center;
     z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s ease;
+    padding: 16px; box-sizing: border-box;
 }
 .modal-overlay.active { opacity: 1; visibility: visible; }
 .modal-content {
     background: #fff; border-radius: 16px; width: 100%; max-width: 600px;
     padding: 32px; transform: scale(0.95) translateY(20px); transition: 0.3s ease;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); position: relative;
+    max-height: 90vh; overflow-y: auto; box-sizing: border-box;
 }
 .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
 
@@ -334,3 +434,44 @@ table td {
 .btn-cancel:hover { background: #E2E8F0; }
 .btn-confirm-delete { background: var(--mb-danger); color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; flex: 1; transition: 0.2s; font-size: 14px; }
 .btn-confirm-delete:hover { background: #dc2626; }
+
+/* =========================================================
+   MEDIA QUERIES (RESPONSIVE BREAKPOINTS)
+========================================================= */
+@media (max-width: 992px) {
+    .form-row, .form-row.three-cols {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .table-container, .form-container {
+        padding: 20px;
+    }
+    .top-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .search-form {
+        width: 100%;
+    }
+    .search-form input {
+        flex: 1;
+        width: 100%;
+    }
+    .upload-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .upload-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .form-action-container {
+        flex-direction: column;
+    }
+    .clear-form-btn, .submit-form-btn {
+        width: 100%;
+    }
+}
